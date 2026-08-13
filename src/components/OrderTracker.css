@@ -1,0 +1,78 @@
+.order-tracker-page {
+  padding-top: 120px;
+  min-height: 100vh;
+}
+
+.tracker-header h1 {
+  font-size: 32px;
+  font-weight: 300;
+  letter-spacing: 6px;
+}
+
+.order-tracker-card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+}
+
+/* Timeline */
+.timeline-track {
+  padding: 0 40px;
+}
+
+.timeline-track::before {
+  content: '';
+  position: absolute;
+  top: 20px;
+  left: 60px;
+  right: 60px;
+  height: 2px;
+  background-color: var(--color-border);
+  z-index: 1;
+}
+
+.timeline-step {
+  position: relative;
+  z-index: 2;
+}
+
+.step-icon-box {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: var(--color-bg);
+  border: 2px solid var(--color-border);
+  color: var(--color-text-muted);
+  transition: all 0.3s ease;
+}
+
+.timeline-step.completed .step-icon-box {
+  background-color: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #000;
+}
+
+.step-label {
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+}
+
+.timeline-step.completed .step-label {
+  color: var(--color-accent);
+}
+
+@media (max-width: 768px) {
+  .timeline-track {
+    flex-direction: column;
+    gap: 20px;
+    align-items: flex-start;
+  }
+  .timeline-track::before {
+    display: none;
+  }
+  .timeline-step {
+    flex-direction: row !important;
+    gap: 15px;
+  }
+}

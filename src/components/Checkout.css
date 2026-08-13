@@ -1,0 +1,75 @@
+.checkout-page {
+  padding-top: 120px;
+  min-height: 100vh;
+}
+
+.checkout-header h1 {
+  font-size: 32px;
+  font-weight: 300;
+  letter-spacing: 6px;
+}
+
+.step-item {
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--color-text-muted);
+  border-bottom: 2px solid transparent;
+  padding-bottom: 5px;
+}
+
+.step-item.active {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.checkout-card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+}
+
+.card-title {
+  font-size: 16px;
+  letter-spacing: 2px;
+  font-weight: 400;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 15px;
+}
+
+.payment-option-card {
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.payment-option-card:hover, .payment-option-card.active {
+  border-color: var(--color-accent);
+}
+
+.option-title {
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: var(--color-white);
+}
+
+.checkout-summary-sidebar {
+  width: 320px;
+  flex-shrink: 0;
+}
+
+.bg-surface {
+  background-color: var(--color-surface);
+}
+
+.text-accent {
+  color: var(--color-accent);
+}
+
+@media (max-width: 900px) {
+  .checkout-content {
+    flex-direction: column;
+  }
+  .checkout-summary-sidebar {
+    width: 100%;
+  }
+}

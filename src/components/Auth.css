@@ -1,0 +1,136 @@
+.auth-page {
+  min-height: 80vh;
+  padding-top: 120px;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 480px;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  padding: 40px;
+}
+
+.auth-card h2 {
+  font-size: 24px;
+  font-weight: 300;
+  letter-spacing: 4px;
+}
+
+.auth-card .subtitle {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin-top: 5px;
+}
+
+.method-toggle {
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 15px;
+}
+
+.method-btn {
+  font-size: 11px;
+  letter-spacing: 2px;
+  padding: 8px 16px;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  transition: all 0.3s ease;
+}
+
+.method-btn.active, .method-btn:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.auth-form label {
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--color-accent);
+  margin-bottom: 5px;
+}
+
+.input-with-validation {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-with-validation input {
+  width: 100%;
+  padding-right: 40px;
+}
+
+.validation-icon {
+  position: absolute;
+  right: 12px;
+  display: flex;
+  align-items: center;
+}
+
+.error-hint {
+  font-size: 11px;
+  color: #ff4444;
+  margin-top: 4px;
+}
+
+.disabled-notice {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  border: 1px dashed var(--color-border);
+  padding: 12px;
+}
+
+.auth-form input {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-white);
+  padding: 12px 15px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.3s ease;
+}
+
+.auth-form input:focus {
+  border-color: var(--color-accent);
+}
+
+.otp-input {
+  letter-spacing: 8px;
+  font-size: 20px !important;
+  text-align: center;
+  font-weight: 600;
+}
+
+.hint-text {
+  font-size: 10px;
+  color: var(--color-text-muted);
+  margin-top: 4px;
+}
+
+.auth-message {
+  padding: 12px 15px;
+  font-size: 12px;
+  border-radius: var(--radius-sm);
+}
+
+.auth-message.error {
+  background-color: rgba(255, 68, 68, 0.1);
+  border: 1px solid #ff4444;
+  color: #ff4444;
+}
+
+.auth-message.success {
+  background-color: rgba(0, 200, 81, 0.1);
+  border: 1px solid #00c851;
+  color: #00c851;
+}
+
+.toggle-btn {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  text-transform: none;
+}
+
+.toggle-btn:hover {
+  color: var(--color-accent);
+}

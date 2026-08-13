@@ -1,0 +1,134 @@
+.luxury-cart-page {
+  padding-top: 120px;
+  min-height: 100vh;
+}
+
+.cart-header h1 {
+  font-size: 32px;
+  font-weight: 300;
+  letter-spacing: 6px;
+}
+
+.cart-header .subtitle {
+  font-size: 12px;
+  color: var(--color-accent);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+/* Items */
+.luxury-cart-item {
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 30px;
+}
+
+.item-image {
+  width: 150px;
+  height: 150px;
+  background-color: var(--color-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.item-image img {
+  max-width: 90%;
+  max-height: 90%;
+  object-fit: contain;
+}
+
+.item-subtitle {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  letter-spacing: 2px;
+  margin-bottom: 5px;
+}
+
+.item-title {
+  font-family: var(--font-heading);
+  font-size: 20px;
+  letter-spacing: 2px;
+  color: var(--color-white);
+}
+.item-title:hover {
+  color: var(--color-accent);
+}
+
+.qty-selector select {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-white);
+  padding: 4px 8px;
+  font-size: 12px;
+  outline: none;
+}
+
+.remove-btn {
+  color: var(--color-text-muted);
+  transition: color 0.3s ease;
+}
+.remove-btn:hover {
+  color: #ff4444;
+}
+
+.item-price {
+  font-size: 20px;
+  color: var(--color-white);
+  font-weight: 300;
+}
+
+/* Summary */
+.cart-summary-section {
+  width: 350px;
+  flex-shrink: 0;
+}
+
+.summary-card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+}
+
+.summary-title {
+  font-size: 16px;
+  letter-spacing: 4px;
+  font-weight: 400;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 15px;
+}
+
+.summary-row {
+  font-size: 14px;
+}
+
+.divider {
+  border: none;
+  border-top: 1px solid var(--color-border);
+}
+
+.my-4 {
+  margin-top: 16px;
+  margin-bottom: 16px;
+}
+
+.p-6 {
+  padding: 24px;
+}
+
+.text-xs {
+  font-size: 10px;
+}
+
+.total-price {
+  font-size: 24px;
+  color: var(--color-accent);
+}
+
+@media (max-width: 1024px) {
+  .cart-content {
+    flex-direction: column;
+  }
+  .cart-summary-section {
+    width: 100%;
+  }
+}
