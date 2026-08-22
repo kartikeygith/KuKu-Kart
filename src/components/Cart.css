@@ -20,15 +20,19 @@
 .luxury-cart-item {
   border-bottom: 1px solid var(--color-border);
   padding-bottom: 30px;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  padding: 20px;
 }
 
 .item-image {
-  width: 150px;
-  height: 150px;
-  background-color: var(--color-surface);
+  width: 130px;
+  height: 130px;
+  background-color: var(--color-bg);
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .item-image img {
@@ -47,7 +51,7 @@
 
 .item-title {
   font-family: var(--font-heading);
-  font-size: 20px;
+  font-size: 18px;
   letter-spacing: 2px;
   color: var(--color-white);
 }
@@ -55,13 +59,27 @@
   color: var(--color-accent);
 }
 
-.qty-selector select {
-  background: transparent;
+.qty-control {
   border: 1px solid var(--color-border);
+  background: var(--color-bg);
+}
+
+.qty-btn {
+  padding: 4px 12px;
   color: var(--color-white);
-  padding: 4px 8px;
-  font-size: 12px;
-  outline: none;
+  font-size: 14px;
+  transition: background-color 0.2s ease;
+}
+
+.qty-btn:hover {
+  background-color: var(--color-accent);
+  color: #000;
+}
+
+.qty-number {
+  padding: 0 10px;
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .remove-btn {
@@ -76,11 +94,53 @@
   font-size: 20px;
   color: var(--color-white);
   font-weight: 300;
+  white-space: nowrap;
+}
+
+/* Coupon Box Card */
+.coupon-box-card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+}
+
+.coupon-title {
+  font-size: 13px;
+  letter-spacing: 2px;
+}
+
+.coupon-input {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  color: var(--color-white);
+  padding: 8px 12px;
+  font-size: 12px;
+  outline: none;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.coupon-input:focus {
+  border-color: var(--color-accent);
+}
+
+.applied-coupon-pill {
+  background: rgba(0, 200, 81, 0.08);
+  border: 1px solid #00c851;
+}
+
+.view-available-coupons-btn {
+  text-transform: none;
+  letter-spacing: 0.5px;
+  text-decoration: underline;
+}
+
+.coupon-item-mini {
+  background: var(--color-bg);
 }
 
 /* Summary */
 .cart-summary-section {
-  width: 350px;
+  width: 380px;
   flex-shrink: 0;
 }
 
@@ -90,38 +150,32 @@
 }
 
 .summary-title {
-  font-size: 16px;
-  letter-spacing: 4px;
+  font-size: 15px;
+  letter-spacing: 3px;
   font-weight: 400;
   border-bottom: 1px solid var(--color-border);
   padding-bottom: 15px;
 }
 
 .summary-row {
-  font-size: 14px;
-}
-
-.divider {
-  border: none;
-  border-top: 1px solid var(--color-border);
-}
-
-.my-4 {
-  margin-top: 16px;
-  margin-bottom: 16px;
-}
-
-.p-6 {
-  padding: 24px;
-}
-
-.text-xs {
-  font-size: 10px;
+  font-size: 13px;
 }
 
 .total-price {
   font-size: 24px;
   color: var(--color-accent);
+}
+
+.text-white {
+  color: #fff;
+}
+
+.text-success {
+  color: #00c851;
+}
+
+.text-error {
+  color: #ff4444;
 }
 
 @media (max-width: 1024px) {

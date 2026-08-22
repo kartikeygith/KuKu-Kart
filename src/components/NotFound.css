@@ -1,0 +1,26 @@
+.not-found-page {
+  min-height: 80vh;
+  padding-top: 140px;
+  padding-bottom: 60px;
+}
+
+.error-code {
+  font-size: 96px;
+  font-weight: 200;
+  letter-spacing: 12px;
+  color: var(--color-accent);
+  line-height: 1;
+}
+
+.error-title {
+  font-size: 24px;
+  font-weight: 300;
+  letter-spacing: 4px;
+  margin-top: 10px;
+  margin-bottom: 15px;
+}
+
+.error-desc {
+  max-width: 480px;
+  font-size: 14px;
+}

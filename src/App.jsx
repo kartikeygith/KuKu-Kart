@@ -10,6 +10,7 @@ import Checkout from './components/Checkout'
 import OrderTracker from './components/OrderTracker'
 import Auth from './components/Auth'
 import Admin from './components/Admin'
+import NotFound from './components/NotFound'
 import Footer from './components/Footer'
 import './App.css'
 
@@ -28,6 +29,7 @@ function App() {
           <Route path="/orders" element={<OrderTracker />} />
           <Route path="/login" element={<Auth />} />
           <Route path="/admin" element={<Admin />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
       <Footer />

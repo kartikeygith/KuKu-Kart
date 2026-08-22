@@ -1,14 +1,15 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
-import { Heart, Trash2, ShoppingBag } from 'lucide-react';
+import { Heart, Trash2, ShoppingBag, ArrowRight } from 'lucide-react';
+import { useShop } from '../context/ShopContext';
 import './Wishlist.css';
-import { MOCK_PRODUCTS } from './ProductList';
 
 const Wishlist = () => {
-  const [wishlistItems, setWishlistItems] = useState(MOCK_PRODUCTS.slice(0, 2));
+  const { wishlist, toggleWishlist, addToCart } = useShop();
 
-  const removeItem = (id) => {
-    setWishlistItems(wishlistItems.filter(item => item.id !== id));
+  const handleMoveToCart = (item) => {
+    addToCart(item, 'Standard', 'Default', 1);
+    toggleWishlist(item);
   };
 
   return (
@@ -18,33 +19,49 @@ const Wishlist = () => {
           <Heart size={28} color="var(--color-accent)" fill="var(--color-accent)" />
           <h1>MY WISHLIST</h1>
         </div>
-        <p className="subtitle mt-2">{wishlistItems.length} Saved Luxury Items</p>
+        <p className="subtitle mt-2">{wishlist.length} Saved Luxury Pieces</p>
       </div>
 
-      {wishlistItems.length === 0 ? (
+      {wishlist.length === 0 ? (
         <div className="empty-wishlist text-center p-12 mt-8 border border-border">
           <p className="text-muted mb-4">Your wishlist is currently empty.</p>
-          <Link to="/products" className="btn-primary">EXPLORE COLLECTION</Link>
+          <Link to="/products" className="btn-primary">EXPLORE THE SHOWROOM</Link>
         </div>
       ) : (
         <div className="wishlist-grid grid-3 mt-8">
-          {wishlistItems.map(item => (
+          {wishlist.map(item => (
             <div key={item.id} className="wishlist-card flex-col">
               <div className="card-img-wrap">
-                <img src={item.image} alt={item.title} />
-                <button className="remove-heart-btn" onClick={() => removeItem(item.id)}>
+                <Link to={`/product/${item.id}`}>
+                  <img src={item.image} alt={item.title} />
+                </Link>
+                <button 
+                  className="remove-heart-btn" 
+                  onClick={() => toggleWishlist(item)}
+                  title="Remove from wishlist"
+                >
                   <Trash2 size={16} />
                 </button>
               </div>
               <div className="card-body p-4 flex-col flex-1 justify-between">
                 <div>
-                  <span className="subtitle">{item.subtitle}</span>
-                  <h3 className="title">{item.title}</h3>
+                  <span className="subtitle">{item.subtitle || item.category}</span>
+                  <Link to={`/product/${item.id}`}>
+                    <h3 className="title">{item.title}</h3>
+                  </Link>
                   <div className="price mt-2">${item.price.toLocaleString(undefined, {minimumFractionDigits: 2})}</div>
                 </div>
-                <Link to="/cart" className="btn-secondary flex items-center justify-center gap-2 mt-4 text-center">
-                  <ShoppingBag size={16} /> MOVE TO CART
-                </Link>
+                <div className="flex gap-2 mt-4">
+                  <button 
+                    onClick={() => handleMoveToCart(item)} 
+                    className="btn-primary flex items-center justify-center gap-2 flex-1 text-xs text-center"
+                  >
+                    <ShoppingBag size={14} /> MOVE TO CART
+                  </button>
+                  <Link to={`/product/${item.id}`} className="btn-secondary text-xs flex items-center justify-center px-3" title="View details">
+                    <ArrowRight size={14} />
+                  </Link>
+                </div>
               </div>
             </div>
           ))}
