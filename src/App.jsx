@@ -1,18 +1,20 @@
-import React from 'react'
-import { Routes, Route } from 'react-router-dom'
-import Header from './components/Header'
-import Home from './components/Home'
-import ProductList from './components/ProductList'
-import ProductDetail from './components/ProductDetail'
-import Cart from './components/Cart'
-import Wishlist from './components/Wishlist'
-import Checkout from './components/Checkout'
-import OrderTracker from './components/OrderTracker'
-import Auth from './components/Auth'
-import Admin from './components/Admin'
-import NotFound from './components/NotFound'
-import Footer from './components/Footer'
-import './App.css'
+import React from 'react';
+import { Routes, Route } from 'react-router-dom';
+import Header from './components/navbar/Header';
+import Home from './pages/Home/Home';
+import ProductList from './pages/Products/ProductList';
+import ProductDetail from './pages/ProductDetails/ProductDetail';
+import Cart from './pages/Cart/Cart';
+import Wishlist from './pages/Wishlist/Wishlist';
+import Checkout from './pages/Checkout/Checkout';
+import OrderTracker from './pages/Orders/OrderTracker';
+import Profile from './pages/Profile/Profile';
+import Admin from './pages/Admin/Admin';
+import DeliveryPortal from './pages/DeliveryPartner/DeliveryPortal';
+import Auth from './pages/Auth/Auth';
+import NotFound from './components/NotFound';
+import Footer from './components/Footer';
+import './App.css';
 
 function App() {
   return (
@@ -27,14 +29,16 @@ function App() {
           <Route path="/wishlist" element={<Wishlist />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/orders" element={<OrderTracker />} />
-          <Route path="/login" element={<Auth />} />
+          <Route path="/profile" element={<Profile />} />
           <Route path="/admin" element={<Admin />} />
+          <Route path="/delivery" element={<DeliveryPortal />} />
+          <Route path="/login" element={<Auth />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
       <Footer />
     </div>
-  )
+  );
 }
 
-export default App
+export default App;

@@ -1,29 +1,81 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { MOCK_PRODUCTS } from '../components/ProductList';
+import { PRODUCTS_MASTER, CATEGORIES_DATA, BRANDS_DATA } from '../utils/mockData';
+import { supabase } from '../lib/supabaseClient';
 
 const ShopContext = createContext();
 
-const COUPONS = [
-  { code: 'KUKU500', discount: 500, type: 'fixed', minOrder: 2000, desc: 'Flat $500 off on luxury orders' },
-  { code: 'LUXURY20', discount: 20, type: 'percent', minOrder: 5000, desc: '20% off on premium collections' },
-  { code: 'FIRSTBUY', discount: 10, type: 'percent', minOrder: 1000, desc: '10% off on your first acquisition' },
+const COUPONS_LIST = [
+  { code: 'KUKU500', discount: 500, type: 'fixed', minOrder: 2000, desc: 'Flat $500 off on luxury acquisitions' },
+  { code: 'LUXURY20', discount: 20, type: 'percent', minOrder: 5000, desc: '20% off on complete catalog' },
+  { code: 'FIRSTBUY', discount: 10, type: 'percent', minOrder: 1000, desc: '10% welcome privilege for new clients' },
+  { code: 'FASHION50', discount: 50, type: 'fixed', minOrder: 300, desc: 'Flat $50 off on apparel and footwear' }
+];
+
+const DEFAULT_ADDRESSES = [
+  {
+    id: 'addr-1',
+    fullName: 'Kartikey Sharma',
+    phone: '+91 9876543210',
+    pincode: '110001',
+    houseNo: 'Suite 402, Royal Residency',
+    street: 'Connaught Place, Barakhamba Road',
+    city: 'New Delhi',
+    state: 'Delhi',
+    addressType: 'HOME',
+    isDefault: true
+  },
+  {
+    id: 'addr-2',
+    fullName: 'Kartikey Sharma',
+    phone: '+91 9876543210',
+    pincode: '400001',
+    houseNo: 'Floor 18, Horizon Tower',
+    street: 'Nariman Point, Marine Drive',
+    city: 'Mumbai',
+    state: 'Maharashtra',
+    addressType: 'WORK',
+    isDefault: false
+  }
+];
+
+const DEFAULT_NOTIFICATIONS = [
+  {
+    id: 'notif-1',
+    title: 'Order Dispatched #KK-98231',
+    message: 'Your Sovereign Chronograph has been handed to our white-glove courier.',
+    time: '10 mins ago',
+    type: 'ORDER',
+    isRead: false
+  },
+  {
+    id: 'notif-2',
+    title: 'Private Autumn Privilege Drop',
+    message: 'Use code LUXURY20 for exclusive 20% privilege on timepieces.',
+    time: '2 hours ago',
+    type: 'OFFER',
+    isRead: false
+  }
 ];
 
 export const ShopProvider = ({ children }) => {
-  // Cart state initialized from localStorage
+  // Master products list (seeded + cloud added)
+  const [products, setProducts] = useState(PRODUCTS_MASTER);
+
+  // Cart
   const [cart, setCart] = useState(() => {
     try {
       const saved = localStorage.getItem('kukukart_cart');
       return saved ? JSON.parse(saved) : [
         {
-          id: '1',
-          title: 'THE CHRONOGRAPH',
-          subtitle: 'Limited Edition Timepiece',
+          id: 'a1',
+          title: 'The Sovereign Chronograph',
+          subtitle: 'Hand-assembled Tourbillon Timepiece',
           price: 12500.00,
-          image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&q=80',
+          originalPrice: 15000.00,
+          image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&q=80',
           quantity: 1,
-          size: 'M',
-          color: 'Obsidian Black'
+          size: '42mm Case',
+          color: 'Rose Gold'
         }
       ];
     } catch (e) {
@@ -31,57 +83,96 @@ export const ShopProvider = ({ children }) => {
     }
   });
 
-  // Wishlist state initialized from localStorage
+  // Wishlist
   const [wishlist, setWishlist] = useState(() => {
     try {
       const saved = localStorage.getItem('kukukart_wishlist');
-      return saved ? JSON.parse(saved) : [MOCK_PRODUCTS[0], MOCK_PRODUCTS[1]];
+      return saved ? JSON.parse(saved) : [PRODUCTS_MASTER[0], PRODUCTS_MASTER[4]];
     } catch (e) {
       return [];
     }
   });
 
-  // Coupon state
+  // Addresses
+  const [addresses, setAddresses] = useState(() => {
+    try {
+      const saved = localStorage.getItem('kukukart_addresses');
+      return saved ? JSON.parse(saved) : DEFAULT_ADDRESSES;
+    } catch (e) {
+      return DEFAULT_ADDRESSES;
+    }
+  });
+  const [selectedAddressId, setSelectedAddressId] = useState('addr-1');
+
+  // Delivery Location
+  const [deliveryPincode, setDeliveryPincode] = useState('110001');
+  const [deliveryCity, setDeliveryCity] = useState('New Delhi');
+
+  // Notifications
+  const [notifications, setNotifications] = useState(DEFAULT_NOTIFICATIONS);
+
+  // Recently Viewed
+  const [recentlyViewed, setRecentlyViewed] = useState([]);
+
+  // Coupon
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [couponError, setCouponError] = useState(null);
 
-  // Delivery Pincode
-  const [pincode, setPincode] = useState('110001');
-
-  // Save to localStorage on change
+  // Sync to LocalStorage
   useEffect(() => {
-    try {
-      localStorage.setItem('kukukart_cart', JSON.stringify(cart));
-    } catch (e) {}
+    localStorage.setItem('kukukart_cart', JSON.stringify(cart));
   }, [cart]);
 
   useEffect(() => {
-    try {
-      localStorage.setItem('kukukart_wishlist', JSON.stringify(wishlist));
-    } catch (e) {}
+    localStorage.setItem('kukukart_wishlist', JSON.stringify(wishlist));
   }, [wishlist]);
 
-  // Cart actions
+  useEffect(() => {
+    localStorage.setItem('kukukart_addresses', JSON.stringify(addresses));
+  }, [addresses]);
+
+  // Fetch Supabase products on mount
+  useEffect(() => {
+    const fetchSupabaseProducts = async () => {
+      try {
+        const { data, error } = await supabase.from('products').select('*');
+        if (!error && data && data.length > 0) {
+          setProducts(prev => {
+            const newItems = data.filter(d => !prev.some(p => p.id === d.id));
+            return [...newItems, ...prev];
+          });
+        }
+      } catch (e) {}
+    };
+    fetchSupabaseProducts();
+  }, []);
+
+  // Cart Handlers
   const addToCart = (product, size = 'Standard', color = 'Default', quantity = 1) => {
     setCart(prev => {
-      const existingIndex = prev.findIndex(item => item.id === product.id && item.size === size && item.color === color);
-      if (existingIndex > -1) {
-        const updated = [...prev];
-        updated[existingIndex].quantity += quantity;
-        return updated;
-      } else {
-        return [...prev, {
-          id: product.id,
-          title: product.title,
-          subtitle: product.subtitle || '',
-          price: product.price,
-          image: product.image,
-          quantity,
-          size,
-          color
-        }];
+      const existing = prev.find(item => item.id === product.id && item.size === size && item.color === color);
+      if (existing) {
+        return prev.map(item => 
+          item.id === product.id && item.size === size && item.color === color
+            ? { ...item, quantity: item.quantity + quantity }
+            : item
+        );
       }
+      return [...prev, {
+        id: product.id,
+        title: product.title,
+        subtitle: product.subtitle || '',
+        price: product.price,
+        originalPrice: product.originalPrice || product.price,
+        image: product.image || product.thumbnail_url,
+        quantity,
+        size,
+        color
+      }];
     });
+
+    // Add toast notification
+    addNotification('Item Added to Cart', `${product.title} (${size}) was added to your selection.`, 'CART');
   };
 
   const removeFromCart = (id, size, color) => {
@@ -101,53 +192,95 @@ export const ShopProvider = ({ children }) => {
     }));
   };
 
-  const clearCart = () => {
-    setCart([]);
-  };
+  const clearCart = () => setCart([]);
 
-  // Wishlist actions
+  // Wishlist Handlers
   const toggleWishlist = (product) => {
     setWishlist(prev => {
       const exists = prev.some(item => item.id === product.id);
       if (exists) {
         return prev.filter(item => item.id !== product.id);
       } else {
+        addNotification('Saved to Wishlist', `${product.title} has been moved to your private collection.`, 'OFFER');
         return [...prev, product];
       }
     });
   };
 
-  const isInWishlist = (id) => {
-    return wishlist.some(item => item.id === id);
+  const isInWishlist = (id) => wishlist.some(item => item.id === id);
+
+  // Address Handlers
+  const addAddress = (newAddr) => {
+    const created = { id: 'addr-' + Date.now(), ...newAddr };
+    if (created.isDefault) {
+      setAddresses(prev => prev.map(a => ({ ...a, isDefault: false })).concat(created));
+    } else {
+      setAddresses(prev => [...prev, created]);
+    }
+    setSelectedAddressId(created.id);
   };
 
-  // Calculations
-  const cartSubtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const deleteAddress = (id) => {
+    setAddresses(prev => prev.filter(a => a.id !== id));
+  };
 
-  let discountAmount = 0;
+  // Notification Handlers
+  const addNotification = (title, message, type = 'SYSTEM') => {
+    const notif = {
+      id: 'notif-' + Date.now(),
+      title,
+      message,
+      time: 'Just now',
+      type,
+      isRead: false
+    };
+    setNotifications(prev => [notif, ...prev]);
+  };
+
+  const markAllNotificationsRead = () => {
+    setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+  };
+
+  // Recently Viewed
+  const addToRecentlyViewed = (product) => {
+    setRecentlyViewed(prev => {
+      const filtered = prev.filter(p => p.id !== product.id);
+      return [product, ...filtered].slice(0, 8);
+    });
+  };
+
+  // Bill Calculations
+  const cartMRP = cart.reduce((sum, item) => sum + ((item.originalPrice || item.price) * item.quantity), 0);
+  const cartSubtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const discountOnMRP = Math.max(0, cartMRP - cartSubtotal);
+
+  let couponDiscount = 0;
   if (appliedCoupon) {
     if (appliedCoupon.type === 'fixed') {
-      discountAmount = appliedCoupon.discount;
+      couponDiscount = appliedCoupon.discount;
     } else if (appliedCoupon.type === 'percent') {
-      discountAmount = (cartSubtotal * appliedCoupon.discount) / 100;
+      couponDiscount = (cartSubtotal * appliedCoupon.discount) / 100;
     }
   }
 
-  const cartTotal = Math.max(0, cartSubtotal - discountAmount);
+  const deliveryFee = cartSubtotal > 1000 ? 0 : 0; // Complimentary express delivery
+  const platformFee = 0;
+  const cartTotal = Math.max(0, cartSubtotal - couponDiscount + deliveryFee + platformFee);
 
-  // Coupon handling
+  // Coupon Handlers
   const applyCoupon = (code) => {
     setCouponError(null);
-    const found = COUPONS.find(c => c.code.toUpperCase() === code.trim().toUpperCase());
+    const found = COUPONS_LIST.find(c => c.code.toUpperCase() === code.trim().toUpperCase());
     if (!found) {
-      setCouponError('Invalid coupon code.');
+      setCouponError('Invalid privilege coupon code.');
       return false;
     }
     if (cartSubtotal < found.minOrder) {
-      setCouponError(`Minimum order of $${found.minOrder} required for coupon ${found.code}.`);
+      setCouponError(`Minimum order of $${found.minOrder} required for code ${found.code}.`);
       return false;
     }
     setAppliedCoupon(found);
+    addNotification('Privilege Applied', `Coupon ${found.code} applied successfully!`, 'OFFER');
     return true;
   };
 
@@ -156,20 +289,42 @@ export const ShopProvider = ({ children }) => {
     setCouponError(null);
   };
 
+  const selectedAddress = addresses.find(a => a.id === selectedAddressId) || addresses[0];
+
   return (
     <ShopContext.Provider value={{
+      products,
+      categories: CATEGORIES_DATA,
+      brands: BRANDS_DATA,
       cart,
       wishlist,
       cartCount: cart.reduce((sum, item) => sum + item.quantity, 0),
       wishlistCount: wishlist.length,
+      cartMRP,
       cartSubtotal,
-      discountAmount,
+      discountOnMRP,
+      couponDiscount,
+      deliveryFee,
+      platformFee,
       cartTotal,
       appliedCoupon,
       couponError,
-      availableCoupons: COUPONS,
-      pincode,
-      setPincode,
+      availableCoupons: COUPONS_LIST,
+      addresses,
+      selectedAddress,
+      selectedAddressId,
+      setSelectedAddressId,
+      addAddress,
+      deleteAddress,
+      deliveryPincode,
+      deliveryCity,
+      setDeliveryPincode,
+      setDeliveryCity,
+      notifications,
+      unreadNotifCount: notifications.filter(n => !n.isRead).length,
+      markAllNotificationsRead,
+      recentlyViewed,
+      addToRecentlyViewed,
       addToCart,
       removeFromCart,
       updateCartQty,

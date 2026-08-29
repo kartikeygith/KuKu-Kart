@@ -1,0 +1,22 @@
+.delivery-portal-page {
+  padding-top: 110px;
+  min-height: 100vh;
+  padding-bottom: 80px;
+}
+
+.delivery-title {
+  font-size: 26px;
+  font-weight: 300;
+  letter-spacing: 4px;
+  color: #fff;
+}
+
+.del-status-badge {
+  font-size: 10px;
+  padding: 3px 8px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+.del-status-badge.shipped { background: rgba(198, 168, 124, 0.2); color: var(--color-accent); border: 1px solid var(--color-accent); }
+.del-status-badge.out-for-delivery { background: rgba(0, 200, 81, 0.2); color: #00c851; border: 1px solid #00c851; }
+.del-status-badge.delivered { background: #00c851; color: #000; }

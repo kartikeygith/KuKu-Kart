@@ -1,0 +1,73 @@
+.admin-page-container {
+  padding-top: 110px;
+  min-height: 100vh;
+  padding-bottom: 80px;
+}
+
+.admin-title {
+  font-size: 26px;
+  font-weight: 300;
+  letter-spacing: 4px;
+  color: #fff;
+}
+
+.admin-tab {
+  padding: 8px 16px;
+  background: transparent;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.3s ease;
+}
+.admin-tab.active {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.stat-card {
+  transition: transform 0.2s ease;
+}
+.stat-card:hover { transform: translateY(-2px); }
+
+.stock-pill {
+  padding: 2px 6px;
+  background: rgba(0, 200, 81, 0.15);
+  color: #00c851;
+  border: 1px solid #00c851;
+}
+.stock-pill.low {
+  background: rgba(255, 68, 68, 0.2);
+  color: #ff4444;
+  border-color: #ff4444;
+}
+
+.status-pill {
+  padding: 2px 6px;
+  font-weight: 700;
+}
+.status-pill.shipped { color: #00c851; }
+.status-pill.order-placed { color: var(--color-accent); }
+.status-pill.delivered { color: #00c851; }
+
+.status-select-admin {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  color: #fff;
+  padding: 4px 8px;
+  outline: none;
+}
+
+.chart-bar {
+  transition: height 0.5s ease;
+}
+.chart-bar:hover {
+  background: #fff;
+}
+
+@media (max-width: 1024px) {
+  .admin-stats-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 600px) {
+  .admin-stats-grid { grid-template-columns: 1fr; }
+}
