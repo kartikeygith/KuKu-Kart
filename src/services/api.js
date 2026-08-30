@@ -1,10 +1,24 @@
+import axios from 'axios';
 import { supabase } from '../lib/supabaseClient';
 import { PRODUCTS_MASTER, CATEGORIES_DATA, BRANDS_DATA } from '../utils/mockData';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-// Unified Service Layer: Fetches from Supabase DB or seamlessly falls back to master seeded catalog
+const axiosInstance = axios.create({
+  baseURL: API_BASE_URL,
+  timeout: 10000,
+  headers: {
+    'Content-Type': 'application/json'
+  }
+});
+
+// Unified Service Layer
 export const api = {
+  get: (url, config) => axiosInstance.get(url, config),
+  post: (url, data, config) => axiosInstance.post(url, data, config),
+  put: (url, data, config) => axiosInstance.put(url, data, config),
+  delete: (url, config) => axiosInstance.delete(url, config),
+
   // Products
   getProducts: async (filters = {}) => {
     try {
@@ -14,7 +28,6 @@ export const api = {
       }
       const { data, error } = await query;
       if (!error && data && data.length > 0) {
-        // Merge Supabase products with seeded master catalog
         const combined = [...data, ...PRODUCTS_MASTER.filter(p => !data.some(d => d.id === p.id))];
         return combined;
       }
@@ -42,7 +55,7 @@ export const api = {
       if (!error && data) return data;
     } catch (e) {}
     return {
-      id: 'KK-' + Math.floor(100000 + Math.random() * 900000),
+      id: 'KUKU-' + Math.floor(100000 + Math.random() * 900000),
       ...orderData,
       created_at: new Date().toISOString()
     };
@@ -56,3 +69,5 @@ export const api = {
     return null;
   }
 };
+
+export default api;

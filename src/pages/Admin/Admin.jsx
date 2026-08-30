@@ -15,7 +15,9 @@ import {
   Tag, 
   X,
   Sparkles,
-  Search
+  Search,
+  Filter,
+  CreditCard
 } from 'lucide-react';
 import { useShop } from '../../context/ShopContext';
 import { useAuth } from '../../context/AuthContext';
@@ -26,37 +28,45 @@ const Admin = () => {
   const { products, categories, brands, availableCoupons } = useShop();
   const { user } = useAuth();
 
-  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'products' | 'orders' | 'coupons'
+  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'products' | 'orders'
   const [adminProducts, setAdminProducts] = useState(products);
   const [adminOrders, setAdminOrders] = useState([
     {
       id: 'ord-101',
-      order_number: 'KK-892104',
+      order_number: 'KUKU-892104',
       client_name: 'Kartikey Sharma',
       final_amount: 12500.00,
       status: 'Shipped',
-      payment_method: 'UPI',
+      payment_method: 'Razorpay Online',
+      payment_status: 'Paid',
       date: '2026-08-28'
     },
     {
       id: 'ord-102',
-      order_number: 'KK-749102',
+      order_number: 'KUKU-749102',
       client_name: 'Ananya Mehta',
       final_amount: 890.00,
       status: 'Delivered',
-      payment_method: 'CARD',
+      payment_method: 'Card',
+      payment_status: 'Paid',
       date: '2026-08-25'
     },
     {
       id: 'ord-103',
-      order_number: 'KK-639108',
+      order_number: 'KUKU-639108',
       client_name: 'Vikram Singhania',
       final_amount: 3400.00,
       status: 'Packed',
-      payment_method: 'UPI',
+      payment_method: 'COD',
+      payment_status: 'Pending',
       date: '2026-08-29'
     }
   ]);
+
+  // Order Filters State
+  const [orderSearch, setOrderSearch] = useState('');
+  const [orderStatusFilter, setOrderStatusFilter] = useState('ALL');
+  const [orderPaymentFilter, setOrderPaymentFilter] = useState('ALL');
 
   // Product Add Modal State
   const [showAddProductModal, setShowAddProductModal] = useState(false);
@@ -73,13 +83,6 @@ const Admin = () => {
   const [colorsInput, setColorsInput] = useState('Obsidian Black, Midnight Silver');
 
   const [productSuccess, setProductSuccess] = useState(false);
-
-  // New Coupon Modal State
-  const [showAddCouponModal, setShowAddCouponModal] = useState(false);
-  const [couponCode, setCouponCode] = useState('');
-  const [couponDiscount, setCouponDiscount] = useState('20');
-  const [couponType, setCouponType] = useState('percent');
-  const [couponMinOrder, setCouponMinOrder] = useState('1000');
 
   useEffect(() => {
     const fetchSupabaseOrders = async () => {
@@ -140,7 +143,7 @@ const Admin = () => {
   };
 
   const handleDeleteProduct = async (id) => {
-    if (window.confirm('Delete this product from catalog?')) {
+    if (window.confirm('Delete this product from showroom catalog?')) {
       try {
         await supabase.from('products').delete().eq('id', id);
       } catch (e) {}
@@ -155,8 +158,25 @@ const Admin = () => {
     } catch (e) {}
   };
 
+  // Analytics Metrics
   const totalRevenue = adminOrders.reduce((sum, o) => sum + (parseFloat(o.final_amount) || 0), 0);
+  const pendingOrdersCount = adminOrders.filter(o => o.status !== 'Delivered' && o.status !== 'Cancelled').length;
+  const pendingPaymentsCount = adminOrders.filter(o => o.payment_status?.toLowerCase() === 'pending').length;
+  const codOrdersCount = adminOrders.filter(o => o.payment_method?.toUpperCase().includes('COD')).length;
   const lowStockCount = adminProducts.filter(p => p.stock <= 5).length;
+
+  const filteredAdminOrders = adminOrders.filter(o => {
+    const matchesSearch = !orderSearch.trim() || 
+      o.order_number.toLowerCase().includes(orderSearch.toLowerCase()) ||
+      o.client_name?.toLowerCase().includes(orderSearch.toLowerCase());
+    
+    const matchesStatus = orderStatusFilter === 'ALL' || o.status === orderStatusFilter;
+    const matchesPayment = orderPaymentFilter === 'ALL' || 
+      (orderPaymentFilter === 'PAID' && o.payment_status?.toLowerCase() === 'paid') ||
+      (orderPaymentFilter === 'PENDING' && o.payment_status?.toLowerCase() === 'pending');
+
+    return matchesSearch && matchesStatus && matchesPayment;
+  });
 
   return (
     <div className="admin-page-container container">
@@ -170,14 +190,14 @@ const Admin = () => {
         </div>
         <div className="flex items-center gap-3">
           <span className="text-xs text-success font-mono font-bold flex items-center gap-1">
-            ● PRODUCTION ENGINE ACTIVE
+            ● PRODUCTION CLOUD ONLINE
           </span>
         </div>
       </div>
 
       {productSuccess && (
         <div className="p-3 bg-surface border border-accent text-accent text-xs mb-6 flex items-center gap-2">
-          <Check size={16} /> New luxury masterpiece published to showroom catalog!
+          <Check size={16} /> New luxury masterpiece published to live showroom catalog!
         </div>
       )}
 
@@ -193,7 +213,7 @@ const Admin = () => {
           className={`admin-tab ${activeTab === 'products' ? 'active' : ''}`}
           onClick={() => setActiveTab('products')}
         >
-          CATALOG & INVENTORY ({adminProducts.length})
+          SHOWROOM INVENTORY ({adminProducts.length})
         </button>
         <button 
           className={`admin-tab ${activeTab === 'orders' ? 'active' : ''}`}
@@ -206,6 +226,7 @@ const Admin = () => {
       {/* 1. OVERVIEW TAB */}
       {activeTab === 'overview' && (
         <div className="overview-tab-content flex-col gap-8">
+          
           {/* Stats Cards */}
           <div className="admin-stats-grid grid-4 gap-6">
             <div className="stat-card p-5 border border-border bg-surface flex-col justify-between">
@@ -219,19 +240,19 @@ const Admin = () => {
             </div>
 
             <div className="stat-card p-5 border border-border bg-surface flex-col justify-between">
-              <span className="text-10 text-muted uppercase tracking-wider">TOTAL CLIENT ORDERS</span>
+              <span className="text-10 text-muted uppercase tracking-wider">ACTIVE ORDERS</span>
               <strong className="stat-value text-2xl font-mono text-white mt-2">
-                {adminOrders.length + 128}
+                {pendingOrdersCount} In Fulfillment
               </strong>
-              <span className="text-10 text-muted mt-2">99.4% fulfillment rate</span>
+              <span className="text-10 text-muted mt-2">Total orders: {adminOrders.length}</span>
             </div>
 
             <div className="stat-card p-5 border border-border bg-surface flex-col justify-between">
-              <span className="text-10 text-muted uppercase tracking-wider">ACTIVE SHOWROOM PRODUCTS</span>
+              <span className="text-10 text-muted uppercase tracking-wider">COD DOORSTEP ORDERS</span>
               <strong className="stat-value text-2xl font-mono text-white mt-2">
-                {adminProducts.length}
+                {codOrdersCount} Orders
               </strong>
-              <span className="text-10 text-muted mt-2">Across 8 categories</span>
+              <span className="text-10 text-muted mt-2">Pending cash collection</span>
             </div>
 
             <div className="stat-card p-5 border border-border bg-surface flex-col justify-between">
@@ -240,12 +261,12 @@ const Admin = () => {
                 {lowStockCount} Low Stock
               </strong>
               <span className="text-10 text-error flex items-center gap-1 mt-2">
-                <AlertTriangle size={12} /> Immediate restock required
+                <AlertTriangle size={12} /> Immediate restock needed
               </span>
             </div>
           </div>
 
-          {/* Analytics Visualization Bar Graph */}
+          {/* Revenue Bar Graph */}
           <div className="analytics-chart-box p-6 border border-border bg-surface mt-6">
             <h3 className="text-xs font-heading tracking-widest text-white pb-3 border-b border-border mb-6">
               WEEKLY REVENUE CADENCE ($ USD)
@@ -331,13 +352,53 @@ const Admin = () => {
         </div>
       )}
 
-      {/* 3. ORDERS TAB */}
+      {/* 3. ORDERS TAB (SEARCH & STATUS FILTERS) */}
       {activeTab === 'orders' && (
         <div className="orders-tab-content flex-col">
-          <div className="flex justify-between items-center mb-6">
+          
+          <div className="flex justify-between items-center mb-6 flex-wrap gap-4">
             <h3 className="text-xs font-heading tracking-widest text-white">
-              ACTIVE CLIENT ORDERS ({adminOrders.length})
+              CLIENT ORDERS FULFILLMENT ({filteredAdminOrders.length})
             </h3>
+
+            {/* Filter controls */}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1 border border-border p-1 bg-surface">
+                <Search size={14} className="text-muted" />
+                <input 
+                  type="text" 
+                  placeholder="Search order ID or client..."
+                  value={orderSearch}
+                  onChange={(e) => setOrderSearch(e.target.value)}
+                  className="bg-transparent border-none text-xs text-white outline-none w-48"
+                />
+              </div>
+
+              <select 
+                value={orderStatusFilter} 
+                onChange={(e) => setOrderStatusFilter(e.target.value)}
+                className="status-select-admin text-xs"
+              >
+                <option value="ALL">All Order Statuses</option>
+                <option value="Order Placed">Order Placed</option>
+                <option value="Confirmed">Confirmed</option>
+                <option value="Packed">Packed</option>
+                <option value="Shipped">Shipped</option>
+                <option value="Out for Delivery">Out for Delivery</option>
+                <option value="Delivered">Delivered</option>
+                <option value="Cancelled">Cancelled</option>
+              </select>
+
+              <select 
+                value={orderPaymentFilter} 
+                onChange={(e) => setOrderPaymentFilter(e.target.value)}
+                className="status-select-admin text-xs"
+              >
+                <option value="ALL">All Payments</option>
+                <option value="PAID">Paid Only</option>
+                <option value="PENDING">Pending (COD)</option>
+              </select>
+            </div>
           </div>
 
           <div className="admin-table-wrapper border border-border bg-surface">
@@ -348,17 +409,23 @@ const Admin = () => {
                   <th className="p-3">CLIENT</th>
                   <th className="p-3 text-right">AMOUNT</th>
                   <th className="p-3">PAYMENT</th>
-                  <th className="p-3">STATUS</th>
+                  <th className="p-3">PAY STATUS</th>
+                  <th className="p-3">ORDER STATUS</th>
                   <th className="p-3 text-right">UPDATE STATUS</th>
                 </tr>
               </thead>
               <tbody className="text-muted">
-                {adminOrders.map(o => (
+                {filteredAdminOrders.map(o => (
                   <tr key={o.order_number} className="border-b border-border hover:bg-bg">
                     <td className="p-3 font-mono font-bold text-white">#{o.order_number}</td>
-                    <td className="p-3">{o.client_name}</td>
+                    <td className="p-3 text-white">{o.client_name}</td>
                     <td className="p-3 text-right text-accent font-mono font-bold">${o.final_amount.toLocaleString()}</td>
                     <td className="p-3">{o.payment_method}</td>
+                    <td className="p-3">
+                      <span className={`text-10 font-bold ${o.payment_status?.toLowerCase() === 'paid' ? 'text-success' : 'text-accent'}`}>
+                        {o.payment_status?.toUpperCase() || 'PAID'}
+                      </span>
+                    </td>
                     <td className="p-3">
                       <span className={`status-pill text-10 ${o.status.toLowerCase().replace(/\s+/g, '-')}`}>
                         {o.status}
@@ -389,10 +456,10 @@ const Admin = () => {
 
       {/* Add Product Modal */}
       {showAddProductModal && (
-        <div className="modal-overlay flex items-center justify-center">
-          <div className="modal-card p-6 bg-surface border border-accent max-w-xl w-full text-xs">
+        <div className="location-modal-overlay flex items-center justify-center">
+          <div className="location-modal-card p-6 bg-surface border border-accent max-w-xl w-full text-xs">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-sm font-heading tracking-wider">PUBLISH LUXURY ACQUISITION</h3>
+              <h3 className="text-sm font-heading tracking-wider text-white">PUBLISH LUXURY ACQUISITION</h3>
               <button onClick={() => setShowAddProductModal(false)}><X size={18} /></button>
             </div>
 

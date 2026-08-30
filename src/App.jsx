@@ -8,6 +8,7 @@ import Cart from './pages/Cart/Cart';
 import Wishlist from './pages/Wishlist/Wishlist';
 import Checkout from './pages/Checkout/Checkout';
 import OrderTracker from './pages/Orders/OrderTracker';
+import OrderSuccess from './pages/Orders/OrderSuccess';
 import Profile from './pages/Profile/Profile';
 import Admin from './pages/Admin/Admin';
 import DeliveryPortal from './pages/DeliveryPartner/DeliveryPortal';
@@ -28,11 +29,21 @@ function App() {
           <Route path="/cart" element={<Cart />} />
           <Route path="/wishlist" element={<Wishlist />} />
           <Route path="/checkout" element={<Checkout />} />
+          
+          {/* Order Routes */}
           <Route path="/orders" element={<OrderTracker />} />
+          <Route path="/orders/:orderId" element={<OrderTracker />} />
+          <Route path="/orders/:orderId/success" element={<OrderSuccess />} />
+          <Route path="/orders/success" element={<OrderSuccess />} />
+          <Route path="/account/orders" element={<OrderTracker />} />
+
+          {/* Account & Administration */}
           <Route path="/profile" element={<Profile />} />
           <Route path="/admin" element={<Admin />} />
+          <Route path="/admin/orders" element={<Admin />} />
           <Route path="/delivery" element={<DeliveryPortal />} />
           <Route path="/login" element={<Auth />} />
+          
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
