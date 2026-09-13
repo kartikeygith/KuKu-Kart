@@ -26,8 +26,8 @@ const DeliveryPortal = () => {
       clientName: 'Vikram Singhania',
       clientPhone: '+91 9811224455',
       address: 'Bungalow 7, Amrita Shergill Marg, New Delhi - 110003',
-      amount: 3400.00,
-      paymentStatus: 'COLLECT CASH ($3,400.00)',
+      amount: 14999,
+      paymentStatus: 'COLLECT CASH (₹14,999)',
       status: 'Out for Delivery',
       slot: 'Afternoon 2:00 PM - 5:00 PM'
     }

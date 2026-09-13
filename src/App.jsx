@@ -13,6 +13,7 @@ import Profile from './pages/Profile/Profile';
 import Admin from './pages/Admin/Admin';
 import DeliveryPortal from './pages/DeliveryPartner/DeliveryPortal';
 import Auth from './pages/Auth/Auth';
+import Contact from './pages/Contact/Contact';
 import NotFound from './components/NotFound';
 import Footer from './components/Footer';
 import './App.css';
@@ -36,6 +37,9 @@ function App() {
           <Route path="/orders/:orderId/success" element={<OrderSuccess />} />
           <Route path="/orders/success" element={<OrderSuccess />} />
           <Route path="/account/orders" element={<OrderTracker />} />
+
+          {/* Contact & Support */}
+          <Route path="/contact" element={<Contact />} />
 
           {/* Account & Administration */}
           <Route path="/profile" element={<Profile />} />

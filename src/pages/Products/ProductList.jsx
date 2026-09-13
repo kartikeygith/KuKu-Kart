@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { 
   Filter, 
@@ -14,6 +14,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { useShop } from '../../context/ShopContext';
+import { formatINR } from '../../utils/helpers';
 import './ProductList.css';
 
 const ProductList = () => {
@@ -27,7 +28,7 @@ const ProductList = () => {
   // Local filter states
   const [selectedCategory, setSelectedCategory] = useState(urlCategory);
   const [selectedBrand, setSelectedBrand] = useState(urlBrand);
-  const [priceRange, setPriceRange] = useState(15000);
+  const [priceRange, setPriceRange] = useState(100000);
   const [minRating, setMinRating] = useState(0);
   const [minDiscount, setMinDiscount] = useState(0);
   const [onlyInStock, setOnlyInStock] = useState(false);
@@ -37,6 +38,14 @@ const ProductList = () => {
   const itemsPerPage = 8;
 
   const [addedIds, setAddedIds] = useState({});
+
+  useEffect(() => {
+    if (urlCategory) setSelectedCategory(urlCategory);
+  }, [urlCategory]);
+
+  useEffect(() => {
+    if (urlBrand) setSelectedBrand(urlBrand);
+  }, [urlBrand]);
 
   const handleQuickAdd = (e, product) => {
     e.preventDefault();
@@ -51,7 +60,7 @@ const ProductList = () => {
   const resetFilters = () => {
     setSelectedCategory('All');
     setSelectedBrand('All');
-    setPriceRange(15000);
+    setPriceRange(100000);
     setMinRating(0);
     setMinDiscount(0);
     setOnlyInStock(false);
@@ -62,13 +71,14 @@ const ProductList = () => {
   const filteredProducts = useMemo(() => {
     return products.filter(p => {
       // Category
-      if (selectedCategory !== 'All' && p.category !== selectedCategory) return false;
+      if (selectedCategory !== 'All' && p.category?.toLowerCase() !== selectedCategory.toLowerCase()) return false;
       // Brand
-      if (selectedBrand !== 'All' && p.brand !== selectedBrand) return false;
+      if (selectedBrand !== 'All' && p.brand?.toLowerCase() !== selectedBrand.toLowerCase()) return false;
       // Search
       if (urlSearch && !p.title.toLowerCase().includes(urlSearch.toLowerCase()) && 
           !(p.subtitle && p.subtitle.toLowerCase().includes(urlSearch.toLowerCase())) &&
-          !(p.brand && p.brand.toLowerCase().includes(urlSearch.toLowerCase()))) {
+          !(p.brand && p.brand.toLowerCase().includes(urlSearch.toLowerCase())) &&
+          !(p.category && p.category.toLowerCase().includes(urlSearch.toLowerCase()))) {
         return false;
       }
       // Price
@@ -86,7 +96,7 @@ const ProductList = () => {
       if (sortBy === 'price_high') return b.price - a.price;
       if (sortBy === 'rating') return b.rating - a.rating;
       if (sortBy === 'discount') return (b.discountPercent || 0) - (a.discountPercent || 0);
-      return 0; // default order
+      return 0;
     });
   }, [products, selectedCategory, selectedBrand, urlSearch, priceRange, minRating, minDiscount, onlyInStock, sortBy]);
 
@@ -99,18 +109,18 @@ const ProductList = () => {
       {/* Banner */}
       <div className="catalog-header container flex justify-between items-center">
         <div>
-          <span className="text-xs text-accent tracking-widest uppercase">KUKU KART SHOWROOM</span>
+          <span className="text-xs text-accent tracking-widest uppercase font-bold">KUKU KART SHOWROOM</span>
           <h1 className="catalog-title mt-1">
-            {urlSearch ? `RESULTS FOR "${urlSearch.toUpperCase()}"` : selectedCategory === 'All' ? 'HAUTE COUTURE & MASTERPIECES' : selectedCategory.toUpperCase()}
+            {urlSearch ? `RESULTS FOR "${urlSearch.toUpperCase()}"` : selectedCategory === 'All' ? 'ALL COLLECTIONS & ATELIERS' : selectedCategory.toUpperCase()}
           </h1>
           <p className="text-xs text-muted mt-1">
-            Showing {filteredProducts.length} certified luxury pieces
+            Showing {filteredProducts.length} certified products in Indian Rupees
           </p>
         </div>
 
         {/* View & Sort Bar */}
         <div className="catalog-controls flex items-center gap-4">
-          <div className="flex items-center gap-1 border border-border bg-surface p-1">
+          <div className="flex items-center gap-1 border border-border bg-surface p-1 rounded">
             <button 
               className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`}
               onClick={() => setViewMode('grid')}
@@ -146,7 +156,7 @@ const ProductList = () => {
 
       <div className="catalog-layout container flex gap-8 py-8">
         
-        {/* Left Filter Sidebar (Like Myntra / JioMart Filter Sidebar) */}
+        {/* Left Filter Sidebar */}
         <aside className="filter-sidebar">
           <div className="flex justify-between items-center pb-3 border-b border-border mb-4">
             <span className="font-heading text-xs tracking-wider flex items-center gap-2 text-white">
@@ -170,7 +180,7 @@ const ProductList = () => {
               {categories.map(cat => (
                 <li 
                   key={cat.id} 
-                  className={`filter-item ${selectedCategory === cat.name ? 'active' : ''}`}
+                  className={`filter-item ${selectedCategory.toLowerCase() === cat.name.toLowerCase() ? 'active' : ''}`}
                   onClick={() => { setSelectedCategory(cat.name); setCurrentPage(1); }}
                 >
                   {cat.name}
@@ -181,7 +191,7 @@ const ProductList = () => {
 
           {/* 2. Brand Filter */}
           <div className="filter-group mb-6">
-            <h4 className="filter-label">ATELIER & BRAND</h4>
+            <h4 className="filter-label">BRAND / ATELIER</h4>
             <div className="filter-list flex-col gap-1 mt-2 max-h-48 overflow-y-auto">
               <li 
                 className={`filter-item ${selectedBrand === 'All' ? 'active' : ''}`}
@@ -201,24 +211,24 @@ const ProductList = () => {
             </div>
           </div>
 
-          {/* 3. Price Range Slider */}
+          {/* 3. Price Range Slider (INR) */}
           <div className="filter-group mb-6">
             <div className="flex justify-between items-center">
               <h4 className="filter-label">PRICE CEILING</h4>
-              <span className="text-xs text-accent font-bold">${priceRange.toLocaleString()}</span>
+              <span className="text-xs text-accent font-bold">{formatINR(priceRange)}</span>
             </div>
             <input 
               type="range" 
-              min="200" 
-              max="15000" 
-              step="100"
+              min="500" 
+              max="100000" 
+              step="500"
               value={priceRange} 
               onChange={(e) => { setPriceRange(parseFloat(e.target.value)); setCurrentPage(1); }}
               className="price-slider w-full mt-2"
             />
             <div className="flex justify-between text-10 text-muted mt-1">
-              <span>$200</span>
-              <span>$15,000+</span>
+              <span>₹500</span>
+              <span>₹1,00,000</span>
             </div>
           </div>
 
@@ -240,9 +250,9 @@ const ProductList = () => {
 
           {/* 5. Discount Percentage */}
           <div className="filter-group mb-6">
-            <h4 className="filter-label">DISCOUNT PRIVILEGE</h4>
+            <h4 className="filter-label">MINIMUM DISCOUNT</h4>
             <div className="flex flex-wrap gap-1 mt-2">
-              {[10, 15, 20].map(d => (
+              {[15, 20, 30].map(d => (
                 <button 
                   key={d} 
                   className={`rating-pill-btn ${minDiscount === d ? 'active' : ''}`}
@@ -271,7 +281,7 @@ const ProductList = () => {
         <main className="catalog-products-area flex-1">
           {paginatedProducts.length === 0 ? (
             <div className="no-products p-12 text-center border border-border bg-surface">
-              <h3 className="text-sm font-heading tracking-widest text-white mb-2">NO MATCHING ACQUISITIONS FOUND</h3>
+              <h3 className="text-sm font-heading tracking-widest text-white mb-2">NO MATCHING PRODUCTS FOUND</h3>
               <p className="text-xs text-muted mb-6">Try adjusting your filters or search keywords.</p>
               <button onClick={resetFilters} className="btn-secondary text-xs">RESET ALL FILTERS</button>
             </div>
@@ -286,7 +296,7 @@ const ProductList = () => {
                     <div className="product-card-wrap flex-col" key={product.id}>
                       <div className="product-media relative">
                         <Link to={`/product/${product.id}`}>
-                          <img src={product.image} alt={product.title} />
+                          <img src={product.image} alt={product.title} loading="lazy" />
                         </Link>
                         
                         <button 
@@ -329,8 +339,8 @@ const ProductList = () => {
 
                         <div className="price-row flex justify-between items-baseline mt-4 pt-3 border-t border-border">
                           <div className="flex items-baseline gap-2">
-                            <span className="price-amount font-bold text-accent">${product.price.toLocaleString()}</span>
-                            {product.originalPrice && <span className="mrp-amount text-xs text-muted line-through">${product.originalPrice.toLocaleString()}</span>}
+                            <span className="price-amount font-bold text-accent">{formatINR(product.price)}</span>
+                            {product.originalPrice && <span className="mrp-amount text-xs text-muted line-through">{formatINR(product.originalPrice)}</span>}
                           </div>
                           <span className="text-10 text-muted">{product.stock > 0 ? `${product.stock} in stock` : 'Sold out'}</span>
                         </div>

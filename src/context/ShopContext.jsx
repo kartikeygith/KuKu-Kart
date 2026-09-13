@@ -5,20 +5,22 @@ import { supabase } from '../lib/supabaseClient';
 const ShopContext = createContext();
 
 const COUPONS_LIST = [
-  { code: 'KUKU500', discount: 500, type: 'fixed', minOrder: 2000, desc: 'Flat $500 off on luxury acquisitions' },
-  { code: 'LUXURY20', discount: 20, type: 'percent', minOrder: 5000, desc: '20% off on complete catalog' },
-  { code: 'FIRSTBUY', discount: 10, type: 'percent', minOrder: 1000, desc: '10% welcome privilege for new clients' },
-  { code: 'FASHION50', discount: 50, type: 'fixed', minOrder: 300, desc: 'Flat $50 off on apparel and footwear' }
+  { code: 'KUKU500', discount: 500, type: 'fixed', minOrder: 1999, desc: 'Flat ₹500 off on orders above ₹1,999' },
+  { code: 'LUXURY20', discount: 20, type: 'percent', minOrder: 4999, desc: '20% privilege discount on orders above ₹4,999' },
+  { code: 'WELCOME10', discount: 10, type: 'percent', minOrder: 999, desc: '10% welcome privilege for new customers' },
+  { code: 'FESTIVE50', discount: 50, type: 'percent', minOrder: 9999, desc: 'Special 50% discount on orders above ₹9,999' }
 ];
 
 const DEFAULT_ADDRESSES = [
   {
     id: 'addr-1',
     fullName: 'Kartikey Sharma',
-    phone: '+91 9876543210',
+    phone: '9876543210',
+    altPhone: '9811223344',
     pincode: '110001',
     houseNo: 'Suite 402, Royal Residency',
     street: 'Connaught Place, Barakhamba Road',
+    landmark: 'Near Metro Gate 3',
     city: 'New Delhi',
     state: 'Delhi',
     addressType: 'HOME',
@@ -27,10 +29,12 @@ const DEFAULT_ADDRESSES = [
   {
     id: 'addr-2',
     fullName: 'Kartikey Sharma',
-    phone: '+91 9876543210',
+    phone: '9876543210',
+    altPhone: '',
     pincode: '400001',
     houseNo: 'Floor 18, Horizon Tower',
     street: 'Nariman Point, Marine Drive',
+    landmark: 'Opposite High Court',
     city: 'Mumbai',
     state: 'Maharashtra',
     addressType: 'WORK',
@@ -41,16 +45,16 @@ const DEFAULT_ADDRESSES = [
 const DEFAULT_NOTIFICATIONS = [
   {
     id: 'notif-1',
-    title: 'Order Dispatched #KK-98231',
-    message: 'Your Sovereign Chronograph has been handed to our white-glove courier.',
+    title: 'Order Dispatched #KUKU-892104',
+    message: 'Your Sovereign Chronograph has been handed to our express white-glove courier.',
     time: '10 mins ago',
     type: 'ORDER',
     isRead: false
   },
   {
     id: 'notif-2',
-    title: 'Private Autumn Privilege Drop',
-    message: 'Use code LUXURY20 for exclusive 20% privilege on timepieces.',
+    title: 'Festive Privilege Drop Active',
+    message: 'Use code LUXURY20 for exclusive 20% discount on timepieces and couture.',
     time: '2 hours ago',
     type: 'OFFER',
     isRead: false
@@ -64,18 +68,18 @@ export const ShopProvider = ({ children }) => {
   // Cart
   const [cart, setCart] = useState(() => {
     try {
-      const saved = localStorage.getItem('kukukart_cart');
+      const saved = localStorage.getItem('kukukart_cart_inr_v2');
       return saved ? JSON.parse(saved) : [
         {
           id: 'a1',
           title: 'The Sovereign Chronograph',
           subtitle: 'Hand-assembled Tourbillon Timepiece',
-          price: 12500.00,
-          originalPrice: 15000.00,
+          price: 24999,
+          originalPrice: 32999,
           image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&q=80',
           quantity: 1,
           size: '42mm Case',
-          color: 'Rose Gold'
+          color: 'Rose Gold / Alligator Strap'
         }
       ];
     } catch (e) {
@@ -86,8 +90,8 @@ export const ShopProvider = ({ children }) => {
   // Wishlist
   const [wishlist, setWishlist] = useState(() => {
     try {
-      const saved = localStorage.getItem('kukukart_wishlist');
-      return saved ? JSON.parse(saved) : [PRODUCTS_MASTER[0], PRODUCTS_MASTER[4]];
+      const saved = localStorage.getItem('kukukart_wishlist_inr_v2');
+      return saved ? JSON.parse(saved) : [PRODUCTS_MASTER[0], PRODUCTS_MASTER[5]];
     } catch (e) {
       return [];
     }
@@ -120,11 +124,11 @@ export const ShopProvider = ({ children }) => {
 
   // Sync to LocalStorage
   useEffect(() => {
-    localStorage.setItem('kukukart_cart', JSON.stringify(cart));
+    localStorage.setItem('kukukart_cart_inr_v2', JSON.stringify(cart));
   }, [cart]);
 
   useEffect(() => {
-    localStorage.setItem('kukukart_wishlist', JSON.stringify(wishlist));
+    localStorage.setItem('kukukart_wishlist_inr_v2', JSON.stringify(wishlist));
   }, [wishlist]);
 
   useEffect(() => {
@@ -162,17 +166,16 @@ export const ShopProvider = ({ children }) => {
         id: product.id,
         title: product.title,
         subtitle: product.subtitle || '',
-        price: product.price,
-        originalPrice: product.originalPrice || product.price,
+        price: Number(product.price),
+        originalPrice: Number(product.originalPrice || product.price),
         image: product.image || product.thumbnail_url,
-        quantity,
+        quantity: Number(quantity),
         size,
         color
       }];
     });
 
-    // Add toast notification
-    addNotification('Item Added to Cart', `${product.title} (${size}) was added to your selection.`, 'CART');
+    addNotification('Item Added to Cart', `${product.title} (${size}) was added to your bag.`, 'CART');
   };
 
   const removeFromCart = (id, size, color) => {
@@ -249,9 +252,9 @@ export const ShopProvider = ({ children }) => {
     });
   };
 
-  // Bill Calculations
-  const cartMRP = cart.reduce((sum, item) => sum + ((item.originalPrice || item.price) * item.quantity), 0);
-  const cartSubtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  // Bill Calculations in INR
+  const cartMRP = cart.reduce((sum, item) => sum + ((Number(item.originalPrice) || Number(item.price)) * item.quantity), 0);
+  const cartSubtotal = cart.reduce((sum, item) => sum + (Number(item.price) * item.quantity), 0);
   const discountOnMRP = Math.max(0, cartMRP - cartSubtotal);
 
   let couponDiscount = 0;
@@ -259,12 +262,13 @@ export const ShopProvider = ({ children }) => {
     if (appliedCoupon.type === 'fixed') {
       couponDiscount = appliedCoupon.discount;
     } else if (appliedCoupon.type === 'percent') {
-      couponDiscount = (cartSubtotal * appliedCoupon.discount) / 100;
+      couponDiscount = Math.round((cartSubtotal * appliedCoupon.discount) / 100);
     }
   }
 
-  const deliveryFee = cartSubtotal > 1000 ? 0 : 0; // Complimentary express delivery
-  const platformFee = 0;
+  // Free delivery on orders above ₹999
+  const deliveryFee = cartSubtotal >= 999 || cartSubtotal === 0 ? 0 : 99;
+  const platformFee = 0; // 100% Free
   const cartTotal = Math.max(0, cartSubtotal - couponDiscount + deliveryFee + platformFee);
 
   // Coupon Handlers
@@ -272,15 +276,15 @@ export const ShopProvider = ({ children }) => {
     setCouponError(null);
     const found = COUPONS_LIST.find(c => c.code.toUpperCase() === code.trim().toUpperCase());
     if (!found) {
-      setCouponError('Invalid privilege coupon code.');
+      setCouponError('Invalid coupon code.');
       return false;
     }
     if (cartSubtotal < found.minOrder) {
-      setCouponError(`Minimum order of $${found.minOrder} required for code ${found.code}.`);
+      setCouponError(`Minimum order of ₹${found.minOrder.toLocaleString('en-IN')} required for code ${found.code}.`);
       return false;
     }
     setAppliedCoupon(found);
-    addNotification('Privilege Applied', `Coupon ${found.code} applied successfully!`, 'OFFER');
+    addNotification('Coupon Applied', `Privilege code ${found.code} applied successfully!`, 'OFFER');
     return true;
   };
 
@@ -304,6 +308,7 @@ export const ShopProvider = ({ children }) => {
       cartSubtotal,
       discountOnMRP,
       couponDiscount,
+      discountAmount: couponDiscount,
       deliveryFee,
       platformFee,
       cartTotal,

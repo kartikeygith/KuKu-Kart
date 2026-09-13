@@ -1,15 +1,22 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { Heart, Trash2, ShoppingBag, ArrowRight, Sparkles } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Heart, Trash2, ShoppingBag, ArrowRight, Sparkles, Zap } from 'lucide-react';
 import { useShop } from '../../context/ShopContext';
+import { formatINR } from '../../utils/helpers';
 import './Wishlist.css';
 
 const Wishlist = () => {
+  const navigate = useNavigate();
   const { wishlist, toggleWishlist, addToCart } = useShop();
 
   const handleMoveToCart = (item) => {
     addToCart(item, item.sizes?.[0] || 'Standard', item.colors?.[0] || 'Default', 1);
     toggleWishlist(item);
+  };
+
+  const handleBuyNow = (item) => {
+    addToCart(item, item.sizes?.[0] || 'Standard', item.colors?.[0] || 'Default', 1);
+    navigate('/checkout');
   };
 
   const handleMoveAllToCart = () => {
@@ -23,7 +30,7 @@ const Wishlist = () => {
       {/* Header */}
       <div className="wishlist-header flex justify-between items-end pb-4 border-b border-border mb-8">
         <div>
-          <span className="text-xs text-accent tracking-widest uppercase">PRIVATE SELECTION</span>
+          <span className="text-xs text-accent tracking-widest uppercase font-bold">MY SAVED ITEMS</span>
           <h1 className="wishlist-title mt-1 flex items-center gap-3">
             <Heart size={24} color="var(--color-accent)" fill="var(--color-accent)" />
             MY WISHLIST ({wishlist.length} Items)
@@ -40,18 +47,18 @@ const Wishlist = () => {
       </div>
 
       {wishlist.length === 0 ? (
-        <div className="empty-wishlist-box p-16 text-center border border-border bg-surface flex-col items-center">
+        <div className="empty-wishlist-box p-16 text-center border border-border bg-surface flex-col items-center rounded">
           <Heart size={48} color="var(--color-accent)" className="mb-4" />
           <h2 className="text-lg font-heading tracking-widest text-white mb-2">YOUR WISHLIST IS EMPTY</h2>
           <p className="text-xs text-muted max-w-md mx-auto mb-8">
-            Bookmark your favorite haute couture garments, timepieces, and acoustic masterpieces to purchase later.
+            Explore products and save your favorites to review or purchase anytime.
           </p>
-          <Link to="/products" className="btn-primary">EXPLORE SHOWROOM</Link>
+          <Link to="/products" className="btn-primary font-bold tracking-wider">CONTINUE SHOPPING</Link>
         </div>
       ) : (
         <div className="wishlist-items-grid grid-4 gap-6">
           {wishlist.map(item => (
-            <div key={item.id} className="wishlist-card flex-col border border-border bg-surface">
+            <div key={item.id} className="wishlist-card flex-col border border-border bg-surface rounded overflow-hidden">
               <div className="wishlist-media relative">
                 <Link to={`/product/${item.id}`}>
                   <img src={item.image} alt={item.title} />
@@ -60,6 +67,7 @@ const Wishlist = () => {
                   className="wishlist-delete-btn"
                   onClick={() => toggleWishlist(item)}
                   title="Remove from wishlist"
+                  aria-label="Remove item"
                 >
                   <Trash2 size={15} />
                 </button>
@@ -71,21 +79,25 @@ const Wishlist = () => {
                   <Link to={`/product/${item.id}`}>
                     <h4 className="wishlist-item-name mt-1">{item.title}</h4>
                   </Link>
-                  <div className="price-tag-wishlist mt-2 font-bold text-accent">
-                    ${item.price.toLocaleString()}
+                  <div className="price-tag-wishlist mt-2 font-bold text-accent font-mono">
+                    {formatINR(item.price)}
                   </div>
                 </div>
 
                 <div className="wishlist-card-actions flex gap-2 mt-4 pt-3 border-t border-border">
                   <button 
                     onClick={() => handleMoveToCart(item)}
-                    className="btn-primary flex-1 py-2 text-xs flex items-center justify-center gap-2"
+                    className="btn-secondary flex-1 py-2 text-xs flex items-center justify-center gap-1 font-bold"
                   >
-                    <ShoppingBag size={13} /> MOVE TO BAG
+                    <ShoppingBag size={13} /> MOVE TO CART
                   </button>
-                  <Link to={`/product/${item.id}`} className="btn-secondary px-3 flex items-center justify-center">
-                    <ArrowRight size={13} />
-                  </Link>
+                  <button 
+                    onClick={() => handleBuyNow(item)}
+                    className="btn-primary py-2 px-3 text-xs flex items-center justify-center gap-1 font-bold"
+                    title="Buy Now"
+                  >
+                    <Zap size={13} /> BUY
+                  </button>
                 </div>
               </div>
             </div>

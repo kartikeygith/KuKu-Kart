@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useShop } from '../../context/ShopContext';
+import { formatINR } from '../../utils/helpers';
 import './Profile.css';
 
 const Profile = () => {
@@ -294,7 +295,7 @@ const Profile = () => {
                         <span className="text-10 text-success uppercase font-bold">ACTIVE</span>
                       </div>
                       <p className="text-muted leading-relaxed">{c.desc}</p>
-                      <span className="text-10 text-white block mt-2">Min. order: ${c.minOrder}</span>
+                      <span className="text-10 text-white block mt-2">Min. order: {formatINR(c.minOrder)}</span>
                     </div>
 
                     <button 

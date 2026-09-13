@@ -15,11 +15,12 @@ import {
   Sparkles,
   Search,
   Filter,
-  Check
+  Check,
+  ExternalLink
 } from 'lucide-react';
 import { useShop } from '../../context/ShopContext';
 import { supabase } from '../../lib/supabaseClient';
-import { formatDate } from '../../utils/helpers';
+import { formatDate, formatINR } from '../../utils/helpers';
 import './OrderTracker.css';
 
 const ORDER_STAGES = [
@@ -37,10 +38,13 @@ const DEFAULT_ORDERS = [
     order_number: 'KUKU-892104',
     client_name: 'Kartikey Sharma',
     shipping_address: 'Suite 402, Royal Residency, Connaught Place, New Delhi - 110001',
-    final_amount: 12500.00,
+    final_amount: 24999,
     status: 'Shipped',
-    payment_method: 'Razorpay Online',
+    payment_method: 'Razorpay Online (UPI)',
     payment_status: 'Paid',
+    courier_partner: 'Delhivery Express',
+    tracking_number: 'DEL-892104-IN',
+    tracking_url: 'https://www.delhivery.com/track/package/DEL-892104-IN',
     created_at: new Date(Date.now() - 86400000).toISOString(),
     estimated_delivery_date: 'Tomorrow by 2:00 PM',
     items: [
@@ -48,7 +52,7 @@ const DEFAULT_ORDERS = [
         id: 'a1',
         title: 'The Sovereign Chronograph',
         image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&q=80',
-        price: 12500.00,
+        price: 24999,
         quantity: 1,
         size: '42mm Case'
       }
@@ -59,10 +63,13 @@ const DEFAULT_ORDERS = [
     order_number: 'KUKU-749102',
     client_name: 'Kartikey Sharma',
     shipping_address: 'Floor 18, Horizon Tower, Nariman Point, Mumbai - 400001',
-    final_amount: 890.00,
+    final_amount: 6499,
     status: 'Delivered',
-    payment_method: 'Card',
+    payment_method: 'Razorpay (Card)',
     payment_status: 'Paid',
+    courier_partner: 'Blue Dart Priority',
+    tracking_number: 'BD-749102-IN',
+    tracking_url: 'https://www.bluedart.com',
     created_at: new Date(Date.now() - 432000000).toISOString(),
     estimated_delivery_date: 'Delivered on Mon, 25 Aug',
     items: [
@@ -70,7 +77,7 @@ const DEFAULT_ORDERS = [
         id: 'e1',
         title: 'Aura Studio Wireless Headphones',
         image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&q=80',
-        price: 890.00,
+        price: 6499,
         quantity: 1,
         size: 'Standard Edition'
       }
@@ -81,18 +88,21 @@ const DEFAULT_ORDERS = [
     order_number: 'KUKU-639108',
     client_name: 'Kartikey Sharma',
     shipping_address: 'Bungalow 7, Amrita Shergill Marg, New Delhi - 110003',
-    final_amount: 3400.00,
+    final_amount: 14999,
     status: 'Order Placed',
-    payment_method: 'COD',
+    payment_method: 'Cash on Delivery (COD)',
     payment_status: 'Pending',
+    courier_partner: 'DTDC Courier',
+    tracking_number: 'Pending Dispatch',
+    tracking_url: '',
     created_at: new Date(Date.now() - 10800000).toISOString(),
     estimated_delivery_date: 'In 2 Business Days',
     items: [
       {
-        id: 'm1',
-        title: 'Midnight Velvet Tuxedo',
-        image: 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=800&q=80',
-        price: 3400.00,
+        id: 'm2',
+        title: 'Savile Row Velvet Tuxedo Jacket',
+        image: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=800&q=80',
+        price: 14999,
         quantity: 1,
         size: '40 Regular'
       }
@@ -160,7 +170,7 @@ const OrderTracker = () => {
         await supabase.from('orders').update({ status: 'Cancelled' }).eq('order_number', orderNumber);
       } catch (e) {}
 
-      addNotification('Order Cancelled', `Order #${orderNumber} has been cancelled safely.`, 'ORDER');
+      addNotification('Order Cancelled', `Order #${orderNumber} has been safely cancelled.`, 'ORDER');
     }
   };
 
@@ -193,12 +203,12 @@ const OrderTracker = () => {
       {/* Page Header */}
       <div className="orders-header flex justify-between items-end pb-4 border-b border-border mb-8">
         <div>
-          <span className="text-xs text-accent tracking-widest uppercase">CLIENT CONCIERGE</span>
+          <span className="text-xs text-accent tracking-widest uppercase font-bold">CLIENT CONCIERGE</span>
           <h1 className="orders-title mt-1 flex items-center gap-3">
             <Package size={24} color="var(--color-accent)" /> MY ORDERS & CONCIERGE TRACKER
           </h1>
         </div>
-        <span className="text-xs text-muted">Showing {filteredOrders.length} Acquisitions</span>
+        <span className="text-xs text-muted">Showing {filteredOrders.length} Orders</span>
       </div>
 
       {/* Filter & Search Bar */}
@@ -216,22 +226,22 @@ const OrderTracker = () => {
           ))}
         </div>
 
-        <div className="order-search-input-box flex items-center gap-2 p-2 border border-border bg-surface">
+        <div className="order-search-input-box flex items-center gap-2 p-2 border border-border bg-surface rounded">
           <Search size={14} className="text-muted" />
           <input 
             type="text" 
-            placeholder="Search by Order ID..."
+            placeholder="Search Order ID..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="bg-transparent border-none text-xs text-white outline-none w-44"
+            className="bg-transparent border-none text-xs text-white outline-none w-48"
           />
         </div>
       </div>
 
       {filteredOrders.length === 0 ? (
-        <div className="empty-orders-state p-16 text-center border border-border bg-surface flex-col items-center">
+        <div className="empty-orders-state p-16 text-center border border-border bg-surface flex-col items-center rounded">
           <Package size={48} color="var(--color-accent)" className="mb-4" />
-          <h2 className="text-lg font-heading tracking-widest text-white mb-2">NO MATCHING ACQUISITIONS FOUND</h2>
+          <h2 className="text-lg font-heading tracking-widest text-white mb-2">NO MATCHING ORDERS FOUND</h2>
           <p className="text-xs text-muted max-w-md mx-auto mb-6">Explore our showroom collections to place your next order.</p>
           <Link to="/products" className="btn-primary">EXPLORE SHOWROOM</Link>
         </div>
@@ -247,10 +257,10 @@ const OrderTracker = () => {
               return (
                 <div 
                   key={order.order_number}
-                  className={`order-card p-5 border bg-surface flex-col gap-4 cursor-pointer ${isSelected ? 'selected' : ''}`}
+                  className={`order-card p-5 border bg-surface flex-col gap-4 cursor-pointer rounded ${isSelected ? 'selected' : ''}`}
                   onClick={() => setSelectedOrder(order)}
                 >
-                  <div className="flex justify-between items-center pb-3 border-b border-border text-xs">
+                  <div className="flex justify-between items-center pb-3 border-b border-border text-xs flex-wrap gap-2">
                     <div className="flex items-center gap-2">
                       <strong className="text-white text-sm font-mono font-bold">#{order.order_number}</strong>
                       <span className="text-muted">• {formatDate(order.created_at)}</span>
@@ -270,21 +280,21 @@ const OrderTracker = () => {
                         <div className="flex-col text-xs">
                           <strong className="text-white">{item.title}</strong>
                           <span className="text-10 text-muted">Qty: {item.quantity} {item.size && `• Size: ${item.size}`}</span>
-                          <span className="text-accent font-bold mt-1 font-mono">${(item.price * item.quantity).toLocaleString()}</span>
+                          <span className="text-accent font-bold mt-1 font-mono">{formatINR(item.price * item.quantity)}</span>
                         </div>
                       </div>
                     ))}
                   </div>
 
-                  <div className="order-card-footer flex justify-between items-center pt-3 border-t border-border text-xs">
+                  <div className="order-card-footer flex justify-between items-center pt-3 border-t border-border text-xs flex-wrap gap-3">
                     <span className="text-muted">
-                      Total: <strong className="text-white font-mono">${order.final_amount.toLocaleString()}</strong> ({order.payment_method})
+                      Total: <strong className="text-white font-mono">{formatINR(order.final_amount)}</strong> ({order.payment_method})
                     </span>
                     
                     <div className="flex items-center gap-3">
                       <button 
                         onClick={(e) => { e.stopPropagation(); handlePrintInvoice(order); }}
-                        className="btn-secondary text-10 py-1 px-3 flex items-center gap-1"
+                        className="btn-secondary text-10 py-1.5 px-3 flex items-center gap-1 font-bold"
                       >
                         <Download size={12} /> INVOICE
                       </button>
@@ -292,7 +302,7 @@ const OrderTracker = () => {
                       {cancellable && (
                         <button 
                           onClick={(e) => { e.stopPropagation(); handleCancelOrder(order.order_number); }}
-                          className="text-10 text-error hover:underline px-2"
+                          className="text-10 text-error hover:underline px-2 cursor-pointer font-bold"
                         >
                           Cancel Order
                         </button>
@@ -301,7 +311,7 @@ const OrderTracker = () => {
                       {order.items?.[0] && (
                         <button 
                           onClick={(e) => { e.stopPropagation(); handleBuyAgain(order.items[0]); }}
-                          className="text-10 text-accent hover:underline flex items-center gap-1"
+                          className="text-10 text-accent hover:underline flex items-center gap-1 cursor-pointer font-bold"
                         >
                           <ShoppingBag size={11} /> Buy Again
                         </button>
@@ -313,23 +323,46 @@ const OrderTracker = () => {
             })}
           </div>
 
-          {/* Right Column: Live GPS Timeline & Order Details */}
+          {/* Right Column: Live GPS Timeline & Shipping Details (PART 17 & 21) */}
           {selectedOrder && (
             <div className="order-details-tracker-column flex-col">
-              <div className="tracker-card p-6 border border-border bg-surface sticky-tracker">
+              <div className="tracker-card p-6 border border-border bg-surface sticky-tracker rounded">
                 
-                <span className="text-10 text-accent tracking-widest uppercase block mb-1">REAL-TIME GPS DISPATCH</span>
-                <h3 className="text-sm font-heading tracking-wider text-white pb-3 border-b border-border mb-6">
-                  TRACKING ORDER #{selectedOrder.order_number}
+                <span className="text-10 text-accent tracking-widest uppercase block mb-1 font-bold">REAL-TIME SHIPMENT DISPATCH</span>
+                <h3 className="text-sm font-heading tracking-wider text-white pb-3 border-b border-border mb-5">
+                  ORDER #{selectedOrder.order_number}
                 </h3>
 
                 {/* Status Callout */}
-                <div className="p-4 bg-bg border border-border mb-6 flex items-center gap-3 rounded">
+                <div className="p-4 bg-bg border border-border mb-5 flex items-center gap-3 rounded">
                   <Truck size={22} color="var(--color-accent)" />
                   <div className="flex-col text-xs">
                     <strong className="text-white text-sm">Status: {selectedOrder.status}</strong>
-                    <span className="text-10 text-accent mt-0.5">{selectedOrder.estimated_delivery_date || 'In transit with White-Glove Courier'}</span>
+                    <span className="text-10 text-accent mt-0.5">{selectedOrder.estimated_delivery_date || 'In transit via Express Courier'}</span>
                   </div>
+                </div>
+
+                {/* Shipping & Courier Details (PART 21) */}
+                <div className="shipping-partner-details p-4 border border-border bg-bg mb-5 flex-col gap-2 rounded text-xs">
+                  <span className="text-10 text-accent uppercase font-bold tracking-wider">COURIER & TRACKING DETAILS:</span>
+                  <div className="flex justify-between items-center">
+                    <span className="text-muted">Courier Partner:</span>
+                    <strong className="text-white">{selectedOrder.courier_partner || 'Delhivery Express'}</strong>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-muted">Tracking AWB:</span>
+                    <span className="text-white font-mono">{selectedOrder.tracking_number || 'DEL-' + selectedOrder.order_number.replace('KUKU-', '') + '-IN'}</span>
+                  </div>
+                  {selectedOrder.tracking_url && (
+                    <a 
+                      href={selectedOrder.tracking_url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-accent text-10 flex items-center gap-1 hover:underline mt-1 font-bold"
+                    >
+                      <ExternalLink size={12} /> Track on Courier Website
+                    </a>
+                  )}
                 </div>
 
                 {/* 6-Stage Timeline */}
@@ -356,7 +389,7 @@ const OrderTracker = () => {
                     })}
                   </div>
                 ) : (
-                  <div className="p-4 border border-error bg-bg text-center mb-6">
+                  <div className="p-4 border border-error bg-bg text-center mb-6 rounded">
                     <XCircle size={24} color="#ff4444" className="mx-auto mb-2" />
                     <strong className="text-xs text-error block">ORDER CANCELLED</strong>
                     <span className="text-10 text-muted">Any online payment will be refunded within 24 hours.</span>
@@ -364,8 +397,8 @@ const OrderTracker = () => {
                 )}
 
                 {/* Destination */}
-                <div className="destination-box p-3 border border-border bg-bg text-xs flex-col gap-1 mb-6">
-                  <span className="text-10 text-accent uppercase">DELIVERY DESTINATION:</span>
+                <div className="destination-box p-3 border border-border bg-bg text-xs flex-col gap-1 mb-5 rounded">
+                  <span className="text-10 text-accent uppercase font-bold">DELIVERY DESTINATION:</span>
                   <span className="text-white">{typeof selectedOrder.shipping_address === 'string' ? selectedOrder.shipping_address : selectedOrder.shipping_address?.address}</span>
                 </div>
 
@@ -385,11 +418,11 @@ const OrderTracker = () => {
       {/* Official Tax Invoice Modal */}
       {showInvoiceModal && invoiceOrder && (
         <div className="location-modal-overlay flex items-center justify-center">
-          <div className="location-modal-card p-8 bg-surface border border-accent max-w-2xl w-full text-xs">
+          <div className="location-modal-card p-8 bg-surface border border-accent max-w-2xl w-full text-xs rounded">
             <div className="flex justify-between items-start pb-4 border-b border-border mb-6">
               <div>
-                <h2 className="text-lg font-heading tracking-widest text-white">KUKU KART LUXURY</h2>
-                <span className="text-10 text-muted">HAUTE COUTURE & LUXURY GOODS INVOICE</span>
+                <h2 className="text-lg font-heading tracking-widest text-white font-bold">KUKU KART</h2>
+                <span className="text-10 text-muted">TAX INVOICE & RETAIL RECEIPT</span>
               </div>
               <div className="text-right">
                 <strong className="text-accent text-sm block font-mono">INVOICE #{invoiceOrder.order_number}</strong>
@@ -397,17 +430,18 @@ const OrderTracker = () => {
               </div>
             </div>
 
-            <div className="flex justify-between mb-6 pb-4 border-b border-border">
+            <div className="flex justify-between mb-6 pb-4 border-b border-border flex-wrap gap-4">
               <div>
-                <span className="text-10 text-accent block mb-1">BILLED TO:</span>
+                <span className="text-10 text-accent block mb-1 font-bold">BILLED TO:</span>
                 <strong className="text-white block">{invoiceOrder.client_name}</strong>
                 <span className="text-muted max-w-xs block">
                   {typeof invoiceOrder.shipping_address === 'string' ? invoiceOrder.shipping_address : invoiceOrder.shipping_address?.address}
                 </span>
               </div>
               <div className="text-right">
-                <span className="text-10 text-accent block mb-1">PAYMENT DETAILS:</span>
+                <span className="text-10 text-accent block mb-1 font-bold">PAYMENT DETAILS:</span>
                 <strong className="text-success block">{invoiceOrder.payment_status?.toUpperCase()} ({invoiceOrder.payment_method})</strong>
+                <span className="text-10 text-muted block mt-1">Courier: {invoiceOrder.courier_partner || 'Delhivery'}</span>
               </div>
             </div>
 
@@ -425,8 +459,8 @@ const OrderTracker = () => {
                   <tr key={i} className="border-b border-border">
                     <td className="py-2 text-white">{it.title} ({it.size || 'Standard'})</td>
                     <td className="py-2 text-center">{it.quantity}</td>
-                    <td className="py-2 text-right font-mono">${it.price.toLocaleString()}</td>
-                    <td className="py-2 text-right text-accent font-mono font-bold">${(it.price * it.quantity).toLocaleString()}</td>
+                    <td className="py-2 text-right font-mono">{formatINR(it.price)}</td>
+                    <td className="py-2 text-right text-accent font-mono font-bold">{formatINR(it.price * it.quantity)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -434,7 +468,7 @@ const OrderTracker = () => {
 
             <div className="flex justify-between items-baseline pt-4 border-t border-border mb-6 text-sm">
               <strong className="text-white font-heading tracking-wider">TOTAL PAID:</strong>
-              <strong className="text-accent font-mono text-xl font-bold">${invoiceOrder.final_amount.toLocaleString(undefined, {minimumFractionDigits: 2})}</strong>
+              <strong className="text-accent font-mono text-xl font-bold">{formatINR(invoiceOrder.final_amount)}</strong>
             </div>
 
             <div className="flex gap-4">
@@ -446,7 +480,7 @@ const OrderTracker = () => {
               </button>
               <button 
                 onClick={() => setShowInvoiceModal(false)}
-                className="btn-secondary flex-1 py-3 text-xs"
+                className="btn-secondary flex-1 py-3 text-xs font-bold"
               >
                 CLOSE
               </button>

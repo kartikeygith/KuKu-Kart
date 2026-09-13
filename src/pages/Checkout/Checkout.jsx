@@ -24,7 +24,7 @@ import {
 import { useShop } from '../../context/ShopContext';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../lib/supabaseClient';
-import { getEstimatedDelivery, formatCurrency } from '../../utils/helpers';
+import { getEstimatedDelivery, formatINR } from '../../utils/helpers';
 import api from '../../services/api';
 import './Checkout.css';
 
@@ -37,6 +37,7 @@ const Checkout = () => {
     cartSubtotal, 
     discountOnMRP,
     discountAmount, 
+    deliveryFee,
     cartTotal, 
     appliedCoupon, 
     clearCart,
@@ -80,7 +81,7 @@ const Checkout = () => {
     setGeneratedCaptcha(Math.floor(1000 + Math.random() * 9000).toString());
   }, []);
 
-  // Helper to dynamically load Razorpay script
+  // Dynamic Razorpay Script Loader
   const loadRazorpayScript = () => {
     return new Promise((resolve) => {
       if (window.Razorpay) {
@@ -100,8 +101,8 @@ const Checkout = () => {
     if (!fullName.trim()) return 'Full Name is required.';
     if (!/^[6-9]\d{9}$/.test(phone.replace(/\D/g, ''))) return 'Please enter a valid 10-digit Indian mobile number.';
     if (!/^[1-9][0-9]{5}$/.test(pincode.replace(/\D/g, ''))) return 'Please enter a valid 6-digit Indian PIN code.';
-    if (!houseNo.trim()) return 'House / Flat / Suite number is required.';
-    if (!street.trim()) return 'Area / Street is required.';
+    if (!houseNo.trim()) return 'House / Flat / Building number is required.';
+    if (!street.trim()) return 'Area / Street / Road is required.';
     if (!city.trim()) return 'City is required.';
     return null;
   };
@@ -124,7 +125,7 @@ const Checkout = () => {
       street: street.trim(),
       landmark: landmark.trim(),
       city: city.trim(),
-      state: stateName.trim(),
+      state: stateName.trim() || 'Delhi',
       country: 'India',
       addressType,
       isDefault
@@ -153,7 +154,7 @@ const Checkout = () => {
     const orderPayload = {
       order_number: orderNumber,
       client_name: selectedAddress.fullName || user?.full_name || 'Valued Client',
-      client_email: user?.email || 'client@gmail.com',
+      client_email: user?.email || 'client@kukukart.in',
       client_phone: selectedAddress.phone || '9876543210',
       shipping_address: destinationStr,
       total_amount: cartMRP,
@@ -170,7 +171,7 @@ const Checkout = () => {
     // ------------------------------------------
     if (paymentChoice === 'cod') {
       if (codCaptchaInput.trim() !== generatedCaptcha) {
-        setErrorMessage('Invalid captcha digits. Please re-enter.');
+        setErrorMessage('Invalid captcha digits. Please re-enter the 4-digit code.');
         return;
       }
 
@@ -178,7 +179,6 @@ const Checkout = () => {
       setProcessingStatus('Securing Cash on Delivery Order...');
 
       try {
-        // Record order in Supabase
         await supabase.from('orders').insert([{
           order_number: orderNumber,
           client_name: orderPayload.client_name,
@@ -191,21 +191,21 @@ const Checkout = () => {
           coupon_code: appliedCoupon?.code || null,
           final_amount: cartTotal,
           status: 'Order Placed',
-          payment_method: 'COD',
+          payment_method: 'Cash on Delivery (COD)',
           payment_status: 'Pending',
           estimated_delivery_date: estDelivery
         }]);
       } catch (err) {
-        console.log('Order recorded into local session.');
+        console.warn('Supabase local sync fallback');
       }
 
-      addNotification('Order Confirmed', `Order #${orderNumber} placed via Cash on Delivery.`, 'ORDER');
+      addNotification('Order Confirmed', `Order #${orderNumber} placed successfully via Cash on Delivery.`, 'ORDER');
       clearCart();
       setIsProcessing(false);
 
       // Redirect to Order Success Page
       navigate(`/orders/${orderNumber}/success`, {
-        state: { order: { ...orderPayload, payment_method: 'COD', payment_status: 'Pending', status: 'Order Placed' } }
+        state: { order: { ...orderPayload, payment_method: 'Cash on Delivery (COD)', payment_status: 'Pending', status: 'Order Placed' } }
       });
       return;
     }
@@ -214,18 +214,18 @@ const Checkout = () => {
     // FLOW 2: RAZORPAY ONLINE PAYMENT GATEWAY
     // ------------------------------------------
     setIsProcessing(true);
-    setProcessingStatus('Connecting to Secure Razorpay Gateway...');
+    setProcessingStatus('Connecting to Official Razorpay Gateway...');
 
     const res = await loadRazorpayScript();
     if (!res) {
       setIsProcessing(false);
-      setErrorMessage('Razorpay SDK failed to load. Please check internet connection.');
+      setErrorMessage('Razorpay SDK failed to load. Please check your internet connection.');
       return;
     }
 
     try {
-      // 1. Create order on backend API (Never trust client-side prices)
-      setProcessingStatus('Generating Secure Payment Intent...');
+      // 1. Create order on backend API (Server-side price verification)
+      setProcessingStatus('Creating Secure Razorpay Order...');
       let orderData = null;
 
       try {
@@ -238,24 +238,24 @@ const Checkout = () => {
           orderData = response.data;
         }
       } catch (apiErr) {
-        console.warn('Backend API offline, launching verified gateway sandbox...');
+        console.warn('Backend server offline or unconfigured, launching verified Razorpay sandbox...');
       }
 
       const razorpayKey = orderData?.key || import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_placeholder';
       const razorpayOrderId = orderData?.orderId || 'order_kuku_' + Math.random().toString(36).substring(2, 9);
 
-      // 2. Configure official Razorpay Checkout Options
+      // 2. Official Razorpay Checkout Configuration
       const options = {
         key: razorpayKey,
-        amount: Math.round(cartTotal * 100),
+        amount: Math.round(cartTotal * 100), // Amount in paise for INR
         currency: 'INR',
-        name: 'KuKu Kart Luxury',
-        description: `Order #${orderNumber} • ${cart.length} Masterpiece(s)`,
+        name: 'KuKu Kart',
+        description: `Order #${orderNumber} • ${cart.length} item(s)`,
         image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=200&q=80',
         order_id: razorpayOrderId.startsWith('order_mock_') ? undefined : razorpayOrderId,
         prefill: {
           name: selectedAddress.fullName,
-          email: user?.email || 'client@gmail.com',
+          email: user?.email || 'client@kukukart.in',
           contact: selectedAddress.phone
         },
         theme: {
@@ -265,13 +265,13 @@ const Checkout = () => {
           ondismiss: () => {
             setIsProcessing(false);
             setProcessingStatus('');
-            setErrorMessage('Payment cancelled by user. Your items remain safe in your bag.');
+            setErrorMessage('Payment cancelled. Your items remain saved in your bag.');
           }
         },
         handler: async (response) => {
-          setProcessingStatus('Verifying 256-bit Signature & Confirming Order...');
+          setProcessingStatus('Verifying 256-bit Payment Signature & Confirming Order...');
 
-          // 3. Verify Signature with Backend
+          // 3. Verify Signature with Backend API
           try {
             await api.post('/payments/verify', {
               razorpay_order_id: response.razorpay_order_id || razorpayOrderId,
@@ -280,10 +280,10 @@ const Checkout = () => {
               orderDetails: orderPayload
             });
           } catch (vErr) {
-            console.log('Signature verified.');
+            console.log('Signature verification check processed.');
           }
 
-          // 4. Record to Supabase
+          // 4. Record to Database
           try {
             await supabase.from('orders').insert([{
               order_number: orderNumber,
@@ -297,7 +297,7 @@ const Checkout = () => {
               coupon_code: appliedCoupon?.code || null,
               final_amount: cartTotal,
               status: 'Order Placed',
-              payment_method: 'Razorpay',
+              payment_method: 'Razorpay Online',
               payment_status: 'Paid',
               razorpay_order_id: response.razorpay_order_id || razorpayOrderId,
               razorpay_payment_id: response.razorpay_payment_id || 'pay_' + Date.now(),
@@ -305,7 +305,7 @@ const Checkout = () => {
             }]);
           } catch (dbErr) {}
 
-          addNotification('Payment Successful', `Order #${orderNumber} confirmed ($${cartTotal.toLocaleString()}).`, 'ORDER');
+          addNotification('Payment Successful', `Order #${orderNumber} confirmed (${formatINR(cartTotal)}).`, 'ORDER');
           clearCart();
           setIsProcessing(false);
 
@@ -327,7 +327,7 @@ const Checkout = () => {
       const rzpPaymentObject = new window.Razorpay(options);
       rzpPaymentObject.on('payment.failed', (response) => {
         setIsProcessing(false);
-        setErrorMessage(`Payment Failed: ${response.error.description || 'Transaction declined by bank.'}`);
+        setErrorMessage(`Payment Failed: ${response.error?.description || 'Transaction declined by bank.'}`);
       });
 
       rzpPaymentObject.open();
@@ -353,8 +353,8 @@ const Checkout = () => {
       {/* Checkout Title Header */}
       <div className="checkout-header-section flex justify-between items-end pb-4 border-b border-border mb-8">
         <div>
-          <span className="text-xs text-accent tracking-widest uppercase">CONCIERGE CHECKOUT</span>
-          <h1 className="checkout-main-title mt-1">SECURE ORDER & PAYMENT</h1>
+          <span className="text-xs text-accent tracking-widest uppercase font-bold">EXPRESS CHECKOUT</span>
+          <h1 className="checkout-main-title mt-1">DELIVERY & PAYMENT</h1>
         </div>
         <div className="flex items-center gap-2 text-xs text-muted">
           <ShieldCheck size={16} color="var(--color-accent)" />
@@ -363,31 +363,29 @@ const Checkout = () => {
       </div>
 
       {errorMessage && (
-        <div className="checkout-error-banner p-4 border border-error bg-bg mb-6 flex items-center justify-between text-xs">
-          <span className="text-error flex items-center gap-2">
+        <div className="checkout-error-banner p-4 border border-error bg-bg mb-6 flex items-center justify-between text-xs rounded">
+          <span className="text-error flex items-center gap-2 font-bold">
             <AlertCircle size={16} /> {errorMessage}
           </span>
-          <button onClick={() => setErrorMessage('')} className="text-muted hover:text-white">✕</button>
+          <button onClick={() => setErrorMessage('')} className="text-muted hover:text-white cursor-pointer">✕</button>
         </div>
       )}
 
       {/* 2-COLUMN RESPONSIVE CHECKOUT LAYOUT */}
       <div className="checkout-two-column-layout flex gap-8">
         
-        {/* ======================================================== */}
         {/* LEFT COLUMN: DELIVERY ADDRESS & PAYMENT SELECTION */}
-        {/* ======================================================== */}
         <div className="checkout-left-column flex-col flex-1 gap-6">
           
           {/* 1. DELIVERY ADDRESS SECTION */}
-          <div className="checkout-card p-6 border border-border bg-surface">
+          <div className="checkout-card p-6 border border-border bg-surface rounded">
             <div className="flex justify-between items-center pb-3 border-b border-border mb-5">
               <h3 className="section-subtitle flex items-center gap-2 text-white">
                 <MapPin size={16} color="var(--color-accent)" /> 1. DELIVERY ADDRESS
               </h3>
               <button 
                 onClick={() => { setShowAddressModal(true); setEditingAddressId(null); }}
-                className="btn-secondary text-xs flex items-center gap-1"
+                className="btn-secondary text-xs flex items-center gap-1 font-bold"
               >
                 <Plus size={13} /> ADD NEW ADDRESS
               </button>
@@ -398,7 +396,7 @@ const Checkout = () => {
               {addresses.map(addr => (
                 <div 
                   key={addr.id}
-                  className={`address-select-card p-4 border flex justify-between items-start cursor-pointer ${selectedAddressId === addr.id ? 'selected' : ''}`}
+                  className={`address-select-card p-4 border flex justify-between items-start cursor-pointer rounded ${selectedAddressId === addr.id ? 'selected' : ''}`}
                   onClick={() => setSelectedAddressId(addr.id)}
                 >
                   <div className="flex gap-3">
@@ -417,7 +415,7 @@ const Checkout = () => {
                       </div>
                       <p className="text-muted leading-relaxed">{addr.houseNo}, {addr.street}</p>
                       <span className="text-white mt-1 block">{addr.city}, {addr.state} - <strong>{addr.pincode}</strong></span>
-                      <span className="text-muted mt-1 block">Phone: {addr.phone}</span>
+                      <span className="text-muted mt-1 block">Mobile: {addr.phone}</span>
                     </div>
                   </div>
 
@@ -434,7 +432,7 @@ const Checkout = () => {
           </div>
 
           {/* 2. PAYMENT METHOD SELECTION */}
-          <div className="checkout-card p-6 border border-border bg-surface">
+          <div className="checkout-card p-6 border border-border bg-surface rounded">
             <h3 className="section-subtitle flex items-center gap-2 text-white pb-3 border-b border-border mb-5">
               <CreditCard size={16} color="var(--color-accent)" /> 2. PAYMENT METHOD
             </h3>
@@ -443,7 +441,7 @@ const Checkout = () => {
               
               {/* Option A: Razorpay Online Payment */}
               <div 
-                className={`payment-option-card p-5 border flex-col cursor-pointer ${paymentChoice === 'online' ? 'selected' : ''}`}
+                className={`payment-option-card p-5 border flex-col cursor-pointer rounded ${paymentChoice === 'online' ? 'selected' : ''}`}
                 onClick={() => setPaymentChoice('online')}
               >
                 <div className="flex justify-between items-center">
@@ -456,8 +454,8 @@ const Checkout = () => {
                       className="accent-gold"
                     />
                     <div>
-                      <strong className="text-white text-sm block">Pay Online (Razorpay)</strong>
-                      <span className="text-10 text-muted">UPI, GPay, PhonePe, Paytm, Cards, NetBanking</span>
+                      <strong className="text-white text-sm block">Pay Online via Razorpay</strong>
+                      <span className="text-10 text-muted">UPI (Google Pay, PhonePe, Paytm), Credit/Debit Cards, Net Banking</span>
                     </div>
                   </div>
                   <span className="instant-badge text-10">INSTANT ZERO-FEE</span>
@@ -465,17 +463,17 @@ const Checkout = () => {
 
                 {paymentChoice === 'online' && (
                   <div className="payment-subpanel mt-4 pt-3 border-t border-border flex flex-wrap gap-2 text-10 text-muted">
-                    <span className="method-chip">⚡ Instant UPI QR</span>
-                    <span className="method-chip">💳 Visa / Mastercard / Amex</span>
-                    <span className="method-chip">🏦 50+ Premier Banks</span>
-                    <span className="method-chip">📱 CRED / Wallets</span>
+                    <span className="method-chip">⚡ UPI (GPay / PhonePe / Paytm / QR)</span>
+                    <span className="method-chip">💳 Visa / Mastercard / RuPay / Amex</span>
+                    <span className="method-chip">🏦 50+ Net Banking Portals</span>
+                    <span className="method-chip">📱 Wallets & CRED</span>
                   </div>
                 )}
               </div>
 
               {/* Option B: Cash on Delivery (COD) */}
               <div 
-                className={`payment-option-card p-5 border flex-col cursor-pointer ${paymentChoice === 'cod' ? 'selected' : ''}`}
+                className={`payment-option-card p-5 border flex-col cursor-pointer rounded ${paymentChoice === 'cod' ? 'selected' : ''}`}
                 onClick={() => setPaymentChoice('cod')}
               >
                 <div className="flex justify-between items-center">
@@ -489,7 +487,7 @@ const Checkout = () => {
                     />
                     <div>
                       <strong className="text-white text-sm block">Cash on Delivery (COD)</strong>
-                      <span className="text-10 text-muted">Pay at doorstep via Cash or Card</span>
+                      <span className="text-10 text-muted">Pay at doorstep via cash or digital UPI upon receipt</span>
                     </div>
                   </div>
                   <span className="cod-badge text-10">DOORSTEP</span>
@@ -497,9 +495,9 @@ const Checkout = () => {
 
                 {paymentChoice === 'cod' && (
                   <div className="payment-subpanel mt-4 pt-3 border-t border-border flex-col gap-3">
-                    <label className="text-10 text-accent block uppercase">Enter Security Captcha Digits:</label>
+                    <label className="text-10 text-accent block uppercase font-bold">Enter 4-Digit Security Captcha:</label>
                     <div className="flex items-center gap-3">
-                      <div className="captcha-display p-2 border border-accent font-mono font-bold tracking-widest text-accent bg-bg">
+                      <div className="captcha-display p-2 border border-accent font-mono font-bold tracking-widest text-accent bg-bg rounded">
                         {generatedCaptcha}
                       </div>
                       <input 
@@ -508,14 +506,14 @@ const Checkout = () => {
                         placeholder="Type 4 digits"
                         value={codCaptchaInput}
                         onChange={(e) => setCodCaptchaInput(e.target.value.replace(/\D/g, ''))}
-                        className="captcha-input p-2 border border-border bg-bg text-white text-xs w-32 text-center font-mono"
+                        className="captcha-input p-2 border border-border bg-bg text-white text-xs w-32 text-center font-mono rounded"
                         onClick={(e) => e.stopPropagation()}
                       />
                       <button 
                         type="button" 
                         onClick={(e) => { e.stopPropagation(); setGeneratedCaptcha(Math.floor(1000 + Math.random() * 9000).toString()); }}
                         className="icon-btn text-muted hover:text-white"
-                        title="New Captcha"
+                        title="Generate New Captcha"
                       >
                         <RefreshCw size={14} />
                       </button>
@@ -530,11 +528,9 @@ const Checkout = () => {
 
         </div>
 
-        {/* ======================================================== */}
         {/* RIGHT COLUMN: ORDER SUMMARY & BILL BREAKDOWN */}
-        {/* ======================================================== */}
         <div className="checkout-right-column">
-          <div className="checkout-summary-card p-6 border border-border bg-surface sticky-summary">
+          <div className="checkout-summary-card p-6 border border-border bg-surface sticky-summary rounded">
             
             <h3 className="summary-title text-xs font-heading tracking-widest text-white pb-3 border-b border-border mb-4">
               ORDER SUMMARY ({cart.reduce((sum, i) => sum + i.quantity, 0)} Items)
@@ -545,14 +541,14 @@ const Checkout = () => {
               {cart.map((item, idx) => (
                 <div key={idx} className="checkout-item-row flex items-center justify-between text-xs gap-3">
                   <div className="flex items-center gap-3 truncate">
-                    <img src={item.image} alt={item.title} className="checkout-item-thumb w-10 h-10 object-cover border border-border" />
+                    <img src={item.image} alt={item.title} className="checkout-item-thumb w-10 h-10 object-cover border border-border rounded" />
                     <div className="flex-col truncate">
                       <span className="text-white truncate font-medium">{item.title}</span>
                       <span className="text-10 text-muted">Qty: {item.quantity} {item.size && `• Size: ${item.size}`}</span>
                     </div>
                   </div>
                   <span className="text-accent font-mono font-bold whitespace-nowrap">
-                    ${(item.price * item.quantity).toLocaleString()}
+                    {formatINR(item.price * item.quantity)}
                   </span>
                 </div>
               ))}
@@ -562,26 +558,28 @@ const Checkout = () => {
             <div className="checkout-price-breakdown flex-col gap-2 text-xs">
               <div className="flex justify-between text-muted">
                 <span>Total MRP</span>
-                <span>${cartMRP.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+                <span className="font-mono">{formatINR(cartMRP)}</span>
               </div>
 
               {discountOnMRP > 0 && (
                 <div className="flex justify-between text-success">
                   <span>Discount on MRP</span>
-                  <span>-${discountOnMRP.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+                  <span className="font-mono">-{formatINR(discountOnMRP)}</span>
                 </div>
               )}
 
               {discountAmount > 0 && (
                 <div className="flex justify-between text-success">
                   <span>Privilege Coupon ({appliedCoupon?.code})</span>
-                  <span>-${discountAmount.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+                  <span className="font-mono">-{formatINR(discountAmount)}</span>
                 </div>
               )}
 
               <div className="flex justify-between text-muted">
-                <span>Delivery & Courier Handling</span>
-                <span className="text-accent font-bold">FREE ($0.00)</span>
+                <span>Delivery Charges</span>
+                <span className={`font-mono ${deliveryFee === 0 ? 'text-accent font-bold' : ''}`}>
+                  {deliveryFee === 0 ? 'FREE (₹0)' : formatINR(deliveryFee)}
+                </span>
               </div>
 
               <div className="flex justify-between text-muted">
@@ -592,11 +590,11 @@ const Checkout = () => {
 
             <hr className="divider my-4 border-border" />
 
-            {/* Final Total Amount */}
+            {/* Final Total Amount in INR */}
             <div className="total-payable-row flex justify-between items-baseline mb-6">
-              <strong className="text-white text-sm font-heading tracking-wider">TOTAL PAYABLE</strong>
+              <strong className="text-white text-sm font-heading tracking-wider">TOTAL AMOUNT</strong>
               <strong className="text-accent text-2xl font-bold font-mono">
-                ${cartTotal.toLocaleString(undefined, {minimumFractionDigits: 2})}
+                {formatINR(cartTotal)}
               </strong>
             </div>
 
@@ -612,11 +610,11 @@ const Checkout = () => {
                 </>
               ) : paymentChoice === 'online' ? (
                 <>
-                  PAY WITH RAZORPAY (${cartTotal.toLocaleString()}) <ArrowRight size={15} />
+                  PAY VIA RAZORPAY ({formatINR(cartTotal)}) <ArrowRight size={15} />
                 </>
               ) : (
                 <>
-                  PLACE COD ORDER <ArrowRight size={15} />
+                  CONFIRM COD ORDER ({formatINR(cartTotal)}) <ArrowRight size={15} />
                 </>
               )}
             </button>
@@ -630,35 +628,34 @@ const Checkout = () => {
 
       </div>
 
-      {/* ======================================================== */}
       {/* ADD / EDIT ADDRESS MODAL */}
-      {/* ======================================================== */}
       {showAddressModal && (
         <div className="location-modal-overlay flex items-center justify-center">
-          <div className="location-modal-card p-6 bg-surface border border-accent max-w-lg w-full text-xs">
+          <div className="location-modal-card p-6 bg-surface border border-accent max-w-lg w-full text-xs rounded">
             <div className="flex justify-between items-center pb-3 border-b border-border mb-4">
               <h3 className="text-sm font-heading tracking-wider text-white">
-                {editingAddressId ? 'EDIT DESTINATION' : 'ADD NEW CONCIERGE DESTINATION'}
+                {editingAddressId ? 'EDIT DELIVERY DESTINATION' : 'ADD DELIVERY ADDRESS'}
               </h3>
-              <button onClick={() => setShowAddressModal(false)}><X size={18} /></button>
+              <button onClick={() => setShowAddressModal(false)} className="cursor-pointer"><X size={18} /></button>
             </div>
 
-            {addressError && <p className="text-error text-xs mb-3">{addressError}</p>}
+            {addressError && <p className="text-error text-xs mb-3 font-bold">{addressError}</p>}
 
             <form onSubmit={handleSaveAddress} className="flex-col gap-3">
               <div className="flex gap-3">
                 <div className="form-group flex-1 flex-col">
-                  <label className="text-accent mb-1">FULL NAME *</label>
+                  <label className="text-accent mb-1 font-bold">FULL NAME *</label>
                   <input 
                     type="text" 
                     value={fullName} 
                     onChange={(e) => setFullName(e.target.value)} 
                     placeholder="e.g. Kartikey Sharma"
                     required 
+                    className="p-2 bg-bg border border-border text-white text-xs rounded"
                   />
                 </div>
                 <div className="form-group flex-1 flex-col">
-                  <label className="text-accent mb-1">MOBILE (10 DIGITS) *</label>
+                  <label className="text-accent mb-1 font-bold">MOBILE (10 DIGITS) *</label>
                   <input 
                     type="tel" 
                     maxLength="10"
@@ -666,13 +663,14 @@ const Checkout = () => {
                     onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))} 
                     placeholder="9876543210"
                     required 
+                    className="p-2 bg-bg border border-border text-white text-xs rounded font-mono"
                   />
                 </div>
               </div>
 
               <div className="flex gap-3">
                 <div className="form-group flex-1 flex-col">
-                  <label className="text-accent mb-1">PIN CODE (6 DIGITS) *</label>
+                  <label className="text-accent mb-1 font-bold">PIN CODE (6 DIGITS) *</label>
                   <input 
                     type="text" 
                     maxLength="6"
@@ -680,48 +678,53 @@ const Checkout = () => {
                     onChange={(e) => setPincode(e.target.value.replace(/\D/g, ''))} 
                     placeholder="110001"
                     required 
+                    className="p-2 bg-bg border border-border text-white text-xs rounded font-mono"
                   />
                 </div>
                 <div className="form-group flex-1 flex-col">
-                  <label className="text-accent mb-1">CITY *</label>
+                  <label className="text-accent mb-1 font-bold">CITY *</label>
                   <input 
                     type="text" 
                     value={city} 
                     onChange={(e) => setCity(e.target.value)} 
                     placeholder="New Delhi"
                     required 
+                    className="p-2 bg-bg border border-border text-white text-xs rounded"
                   />
                 </div>
                 <div className="form-group flex-1 flex-col">
-                  <label className="text-accent mb-1">STATE</label>
+                  <label className="text-accent mb-1 font-bold">STATE</label>
                   <input 
                     type="text" 
                     value={stateName} 
                     onChange={(e) => setStateName(e.target.value)} 
                     placeholder="Delhi"
+                    className="p-2 bg-bg border border-border text-white text-xs rounded"
                   />
                 </div>
               </div>
 
               <div className="form-group flex-col">
-                <label className="text-accent mb-1">HOUSE / FLAT / BUILDING NO. *</label>
+                <label className="text-accent mb-1 font-bold">HOUSE / FLAT / BUILDING NO. *</label>
                 <input 
                   type="text" 
                   value={houseNo} 
                   onChange={(e) => setHouseNo(e.target.value)} 
                   placeholder="Suite 402, Royal Residency" 
                   required 
+                  className="p-2 bg-bg border border-border text-white text-xs rounded"
                 />
               </div>
 
               <div className="form-group flex-col">
-                <label className="text-accent mb-1">AREA / STREET / ROAD *</label>
+                <label className="text-accent mb-1 font-bold">AREA / STREET / ROAD *</label>
                 <input 
                   type="text" 
                   value={street} 
                   onChange={(e) => setStreet(e.target.value)} 
                   placeholder="Barakhamba Road, Connaught Place" 
                   required 
+                  className="p-2 bg-bg border border-border text-white text-xs rounded"
                 />
               </div>
 
@@ -732,7 +735,7 @@ const Checkout = () => {
                     <button 
                       key={t}
                       type="button"
-                      className={`type-btn px-3 py-1 border ${addressType === t ? 'border-accent text-accent' : 'border-border text-muted'}`}
+                      className={`type-btn px-3 py-1 border rounded text-10 font-bold ${addressType === t ? 'border-accent text-accent' : 'border-border text-muted'}`}
                       onClick={() => setAddressType(t)}
                     >
                       {t}
@@ -740,7 +743,7 @@ const Checkout = () => {
                   ))}
                 </div>
 
-                <label className="flex items-center gap-2 text-muted cursor-pointer">
+                <label className="flex items-center gap-2 text-muted cursor-pointer text-xs">
                   <input 
                     type="checkbox" 
                     checked={isDefault}

@@ -1,0 +1,24 @@
+.contact-page-container {
+  padding-top: 140px;
+  min-height: 100vh;
+  padding-bottom: 80px;
+}
+
+.contact-title {
+  letter-spacing: 3px;
+  font-weight: 300;
+}
+
+.faq-item {
+  transition: all 0.25s ease;
+}
+
+.faq-item:hover {
+  border-color: var(--color-accent);
+}
+
+@media (max-width: 900px) {
+  .contact-layout-grid {
+    flex-direction: column;
+  }
+}

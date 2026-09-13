@@ -15,7 +15,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
-import { formatDate } from '../../utils/helpers';
+import { formatDate, formatINR } from '../../utils/helpers';
 import './OrderSuccess.css';
 
 const OrderSuccess = () => {
@@ -43,7 +43,7 @@ const OrderSuccess = () => {
             setOrder({
               order_number: orderId,
               client_name: 'Valued Client',
-              final_amount: 12500,
+              final_amount: 14999,
               payment_method: 'Razorpay Online',
               payment_status: 'Paid',
               status: 'Order Placed',
@@ -66,7 +66,7 @@ const OrderSuccess = () => {
 
   return (
     <div className="order-success-page container">
-      <div className="order-success-card p-8 border border-accent bg-surface max-w-2xl mx-auto text-center flex-col items-center">
+      <div className="order-success-card p-8 border border-accent bg-surface max-w-2xl mx-auto text-center flex-col items-center rounded">
         
         {/* Animated Check Icon */}
         <div className="success-check-badge mb-4">
@@ -74,17 +74,17 @@ const OrderSuccess = () => {
         </div>
 
         <span className="text-10 text-accent tracking-widest uppercase font-bold">
-          CONCIERGE ACQUISITION SECURED
+          ORDER VERIFIED & SECURED
         </span>
         <h1 className="success-heading text-2xl font-heading text-white my-2">
           ORDER PLACED SUCCESSFULLY
         </h1>
         <p className="text-xs text-muted max-w-md mx-auto mb-6">
-          Thank you for shopping with <strong className="text-white">KuKu Kart</strong>. Your luxury allocation has been confirmed and registered for white-glove dispatch.
+          Thank you for shopping with <strong className="text-white">KuKu Kart</strong>. Your order has been placed and assigned for courier dispatch.
         </p>
 
         {/* Order Receipt Details Box */}
-        <div className="order-receipt-details-box p-5 border border-border bg-bg text-left w-full mb-8 text-xs flex-col gap-3">
+        <div className="order-receipt-details-box p-5 border border-border bg-bg text-left w-full mb-8 text-xs flex-col gap-3 rounded">
           
           <div className="flex justify-between items-center pb-2 border-b border-border">
             <span className="text-muted">Order ID:</span>
@@ -94,9 +94,9 @@ const OrderSuccess = () => {
           </div>
 
           <div className="flex justify-between items-center pb-2 border-b border-border">
-            <span className="text-muted">Total Payable:</span>
+            <span className="text-muted">Total Amount:</span>
             <strong className="text-accent font-mono text-base font-bold">
-              ${(order?.final_amount || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}
+              {formatINR(order?.final_amount || 0)}
             </strong>
           </div>
 
@@ -143,21 +143,21 @@ const OrderSuccess = () => {
           
           <Link 
             to="/orders" 
-            className="btn-secondary flex-1 py-3 px-6 text-xs flex items-center justify-center gap-2"
+            className="btn-secondary flex-1 py-3 px-6 text-xs flex items-center justify-center gap-2 font-bold"
           >
             <Package size={14} /> VIEW MY ORDERS
           </Link>
 
           <Link 
             to="/products" 
-            className="btn-secondary flex-1 py-3 px-6 text-xs flex items-center justify-center gap-2"
+            className="btn-secondary flex-1 py-3 px-6 text-xs flex items-center justify-center gap-2 font-bold"
           >
             <ShoppingBag size={14} /> CONTINUE SHOPPING
           </Link>
         </div>
 
         <div className="security-guarantee-note flex items-center justify-center gap-2 mt-6 text-10 text-muted">
-          <ShieldCheck size={13} color="var(--color-accent)" /> 100% Guaranteed Luxury Authenticity
+          <ShieldCheck size={13} color="var(--color-accent)" /> 100% Genuine Certified Luxury Products
         </div>
 
       </div>

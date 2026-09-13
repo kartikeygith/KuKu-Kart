@@ -1,5 +1,5 @@
 /* ==========================================================================
-   KUKU KART LUXURY NAVIGATION BAR & HEADER STYLING
+   KUKU KART NAVIGATION BAR & HEADER STYLING (RESPONSIVE & SPACED)
    ========================================================================== */
 
 .luxury-header {
@@ -8,7 +8,7 @@
   left: 0;
   right: 0;
   z-index: 1000;
-  background: rgba(10, 10, 10, 0.94);
+  background: rgba(10, 10, 10, 0.96);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
@@ -19,15 +19,35 @@
 .luxury-header.scrolled {
   background: rgba(6, 6, 6, 0.98);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
-  border-bottom-color: rgba(198, 168, 124, 0.15);
+  border-bottom-color: rgba(198, 168, 124, 0.2);
 }
 
-/* --- 1. Top Strip --- */
-.header-top-strip {
+/* --- 1. Top Announcement Bar --- */
+.announcement-bar {
+  background: linear-gradient(90deg, #141414, #1a150e, #141414);
+  border-bottom: 1px solid rgba(198, 168, 124, 0.15);
   padding: 6px 32px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
   font-size: 11px;
+  color: #ccc;
   letter-spacing: 0.5px;
+}
+
+.announcement-text {
+  font-weight: 500;
+  color: var(--color-accent);
+  display: inline-block;
+  animation: fadeInOut 4s infinite;
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translateY(4px); }
+  10% { opacity: 1; transform: translateY(0); }
+  90% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-4px); }
+}
+
+.announcement-divider {
+  color: rgba(255, 255, 255, 0.2);
 }
 
 .location-btn {
@@ -42,28 +62,14 @@
 .top-link {
   color: var(--color-text-muted);
   transition: color 0.2s ease;
+  text-decoration: none;
 }
 .top-link:hover { color: var(--color-accent); }
 
-.divider-dot {
-  color: rgba(255, 255, 255, 0.18);
-}
-
-.badge-role {
-  padding: 2px 7px;
-  font-size: 9px;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  font-weight: 700;
-  border-radius: 2px;
-}
-.badge-role.admin { background-color: rgba(198, 168, 124, 0.2); color: var(--color-accent); border: 1px solid var(--color-accent); }
-.badge-role.delivery { background-color: rgba(0, 200, 81, 0.2); color: #00c851; border: 1px solid #00c851; }
-
 /* --- 2. Middle Main Navbar --- */
 .header-inner {
-  padding: 14px 32px;
-  gap: 20px;
+  padding: 12px 32px;
+  gap: 24px;
 }
 
 .luxury-logo {
@@ -83,18 +89,18 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 4px;
-  padding: 6px 14px;
+  padding: 7px 14px;
   transition: all 0.3s ease;
-  width: 320px;
+  width: 340px;
 }
 .luxury-search-form:focus-within {
   border-color: var(--color-accent);
-  background: rgba(255, 255, 255, 0.07);
-  box-shadow: 0 0 15px rgba(198, 168, 124, 0.15);
-  width: 380px;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 15px rgba(198, 168, 124, 0.18);
+  width: 400px;
 }
 .luxury-search-input {
   background: transparent;
@@ -105,7 +111,7 @@
   width: 100%;
 }
 .luxury-search-input::placeholder {
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 0.45);
 }
 .clear-search-btn {
   background: transparent;
@@ -131,12 +137,12 @@
   border-radius: 4px;
 }
 .dropdown-header {
-  font-size: 9px;
-  letter-spacing: 2px;
+  font-size: 10px;
+  letter-spacing: 1.5px;
   color: var(--color-accent);
   padding: 8px 14px;
   border-bottom: 1px solid var(--color-border);
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(0, 0, 0, 0.25);
 }
 .search-suggestion-item {
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
@@ -148,7 +154,144 @@
 .suggestion-title { font-size: 12px; font-family: var(--font-heading); color: #fff; display: block; }
 .suggestion-subtitle { font-size: 10px; color: var(--color-accent); }
 
-/* --- 3. CATEGORY NAVIGATION BAR (Bottom Bar) --- */
+.keyword-tag {
+  padding: 4px 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--color-border);
+  color: #ccc;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.keyword-tag:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+  background: rgba(198, 168, 124, 0.1);
+}
+
+/* --- PART 2: HEADER ACTION GROUP (Wishlist, Cart, Orders, User) --- */
+.header-action-group {
+  display: flex;
+  align-items: center;
+  gap: 28px; /* Proper spacing between Wishlist, Cart, Orders, User */
+}
+
+.header-action-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: #d1d1d1;
+  text-decoration: none;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  padding: 4px 6px;
+  border-radius: 4px;
+  transition: all 0.25s ease;
+}
+
+.header-action-item:hover {
+  color: var(--color-accent);
+  transform: translateY(-1px);
+}
+
+.header-action-item.active {
+  color: var(--color-accent);
+}
+
+.action-icon-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+}
+
+.action-label {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.badge-count {
+  position: absolute;
+  top: -7px;
+  right: -9px;
+  font-size: 9px;
+  font-weight: 700;
+  min-width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+}
+.cart-badge { background-color: var(--color-accent); color: #000; }
+.wishlist-badge { background-color: #ff4444; color: #fff; }
+.notif-badge { background-color: #00c851; color: #000; }
+
+/* User dropdown */
+.header-dropdown {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.95);
+  z-index: 1002;
+  min-width: 270px;
+  border-radius: 4px;
+}
+
+.dropdown-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  padding: 8px 10px;
+  text-decoration: none;
+  border-radius: 2px;
+  transition: all 0.2s ease;
+}
+.dropdown-link:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--color-accent);
+}
+
+.role-tag {
+  font-size: 9px;
+  padding: 2px 8px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-accent);
+  color: var(--color-accent);
+  display: inline-block;
+  letter-spacing: 1px;
+  border-radius: 2px;
+}
+
+.role-btn {
+  font-size: 10px;
+  padding: 4px 8px;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  background: var(--color-bg);
+  cursor: pointer;
+  border-radius: 2px;
+  flex: 1;
+}
+.role-btn.active {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+  font-weight: bold;
+}
+
+/* --- PART 1: CATEGORY NAVIGATION BAR --- */
 .header-category-bar {
   background: rgba(14, 14, 14, 0.98);
   border-top: 1px solid rgba(255, 255, 255, 0.05);
@@ -159,17 +302,17 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 28px;
+  gap: 28px; /* Desktop gap 28px */
   padding: 10px 24px;
   flex-wrap: nowrap;
   overflow-x: auto;
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE/Edge */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
   -webkit-overflow-scrolling: touch;
   width: 100%;
 }
 .category-nav-scroll::-webkit-scrollbar {
-  display: none; /* Chrome/Safari */
+  display: none;
 }
 
 .category-nav-item {
@@ -181,7 +324,7 @@
   padding: 6px 14px;
   color: #a0a0a0;
   text-decoration: none;
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 500;
   letter-spacing: 2px;
   text-transform: uppercase;
@@ -246,96 +389,6 @@
   border-color: #00c851;
 }
 
-/* --- 4. Icon Buttons & Badges --- */
-.icon-btn {
-  color: var(--color-text-main);
-  background: transparent;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: color 0.2s ease, transform 0.2s ease;
-  text-decoration: none;
-}
-.icon-btn:hover {
-  color: var(--color-accent);
-  transform: translateY(-1px);
-}
-
-.badge-count {
-  position: absolute;
-  top: -7px;
-  right: -9px;
-  font-size: 9px;
-  font-weight: 700;
-  min-width: 17px;
-  height: 17px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
-}
-.cart-badge { background-color: var(--color-accent); color: #000; }
-.wishlist-badge { background-color: #ff4444; color: #fff; }
-.notif-badge { background-color: #00c851; color: #000; }
-
-/* Dropdown Menus */
-.header-dropdown {
-  position: absolute;
-  top: calc(100% + 12px);
-  right: 0;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.95);
-  z-index: 1002;
-  min-width: 270px;
-  border-radius: 4px;
-}
-
-.dropdown-link {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: var(--color-text-muted);
-  font-size: 12px;
-  padding: 8px 10px;
-  text-decoration: none;
-  border-radius: 2px;
-  transition: all 0.2s ease;
-}
-.dropdown-link:hover {
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--color-accent);
-}
-
-.role-tag {
-  font-size: 9px;
-  padding: 2px 8px;
-  background: var(--color-bg);
-  border: 1px solid var(--color-accent);
-  color: var(--color-accent);
-  display: inline-block;
-  letter-spacing: 1px;
-  border-radius: 2px;
-}
-
-.role-btn {
-  font-size: 10px;
-  padding: 4px 8px;
-  border: 1px solid var(--color-border);
-  color: var(--color-text-muted);
-  background: var(--color-bg);
-  cursor: pointer;
-  border-radius: 2px;
-  flex: 1;
-}
-.role-btn.active {
-  border-color: var(--color-accent);
-  color: var(--color-accent);
-  font-weight: bold;
-}
-
 /* Location Modal */
 .location-modal-overlay {
   position: fixed;
@@ -397,20 +450,23 @@
 
 /* Responsive adjustments */
 @media (max-width: 1024px) {
-  .header-top-strip { display: none; }
+  .header-action-group { gap: 20px; }
   .category-nav-scroll {
     justify-content: flex-start;
     padding: 8px 16px;
-    gap: 16px;
+    gap: 18px; /* Tablet gap 18px */
   }
-  .luxury-search-form { width: 220px; }
-  .luxury-search-form:focus-within { width: 260px; }
+  .luxury-search-form { width: 240px; }
+  .luxury-search-form:focus-within { width: 280px; }
 }
 
 @media (max-width: 768px) {
+  .announcement-right-links { display: none; }
   .hidden-desktop { display: flex !important; }
   .header-inner { padding: 10px 16px; }
   .luxury-search-form { display: none; }
-  .category-nav-scroll { gap: 12px; padding: 6px 12px; }
-  .category-nav-item { font-size: 10px; padding: 5px 10px; }
+  .action-label { display: none; }
+  .header-action-group { gap: 18px; }
+  .category-nav-scroll { gap: 14px; padding: 8px 12px; }
+  .category-nav-item { font-size: 11px; padding: 5px 8px; }
 }
