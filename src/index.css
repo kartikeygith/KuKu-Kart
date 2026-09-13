@@ -220,13 +220,42 @@ html {
   background: #f8fafc !important;
 }
 
-[data-theme="light"] .category-nav-link {
-  color: #475569 !important;
+[data-theme="light"] .header-category-bar {
+  background: #ffffff !important;
+  border-top: 1px solid #eef2f6 !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03) !important;
 }
 
-[data-theme="light"] .category-nav-link:hover,
-[data-theme="light"] .category-nav-link.active {
+[data-theme="light"] .category-nav-item {
+  color: #64748b !important;
+}
+
+[data-theme="light"] .category-nav-item:hover {
+  color: #0f172a !important;
+  background: #f1f5f9 !important;
+}
+
+[data-theme="light"] .category-nav-item.active {
   color: var(--color-accent) !important;
+  font-weight: 700 !important;
+}
+
+[data-theme="light"] .category-nav-item .active-indicator {
+  background: var(--color-accent) !important;
+  box-shadow: 0 0 6px var(--color-accent) !important;
+}
+
+[data-theme="light"] .admin-portal-tab {
+  color: var(--color-accent) !important;
+  border-color: rgba(165, 124, 56, 0.4) !important;
+  background: rgba(165, 124, 56, 0.08) !important;
+}
+
+[data-theme="light"] .delivery-portal-tab {
+  color: #059669 !important;
+  border-color: rgba(5, 150, 105, 0.4) !important;
+  background: rgba(5, 150, 105, 0.08) !important;
 }
 
 [data-theme="light"] .product-card,
