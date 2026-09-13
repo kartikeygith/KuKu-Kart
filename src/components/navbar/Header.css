@@ -173,7 +173,7 @@
 .header-action-group {
   display: flex;
   align-items: center;
-  gap: 28px; /* Proper spacing between Wishlist, Cart, Orders, User */
+  gap: 20px; /* Balanced spacing for Wishlist, Cart, Orders, User, Theme, Settings */
 }
 
 .header-action-item {

@@ -122,6 +122,64 @@ export const ShopProvider = ({ children }) => {
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [couponError, setCouponError] = useState(null);
 
+  // Theme: 'dark' | 'light'
+  const [theme, setTheme] = useState(() => {
+    try {
+      return localStorage.getItem('kukukart_theme') || 'dark';
+    } catch (e) {
+      return 'dark';
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('kukukart_theme', theme);
+      document.documentElement.setAttribute('data-theme', theme);
+    } catch (e) {}
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
+  };
+
+  // Merchant & Courier Pickup Settings (Who picks up orders from seller)
+  const [merchantSettings, setMerchantSettings] = useState(() => {
+    try {
+      const saved = localStorage.getItem('kukukart_merchant_settings');
+      return saved ? JSON.parse(saved) : {
+        warehouseName: 'KuKu Kart Central Atelier & Fulfillment Hub',
+        pickupAddress: 'Plot 42, DLF Phase 4, Galleria Commercial Hub',
+        pickupCity: 'Gurugram, Haryana',
+        pickupPincode: '122002',
+        merchantPhone: '+91 98765 43210',
+        pickupSlot: 'Today (2:00 PM - 5:00 PM)',
+        defaultCourier: 'Delhivery Express',
+        autoSchedulePickup: true
+      };
+    } catch (e) {
+      return {
+        warehouseName: 'KuKu Kart Central Atelier & Fulfillment Hub',
+        pickupAddress: 'Plot 42, DLF Phase 4, Galleria Commercial Hub',
+        pickupCity: 'Gurugram, Haryana',
+        pickupPincode: '122002',
+        merchantPhone: '+91 98765 43210',
+        pickupSlot: 'Today (2:00 PM - 5:00 PM)',
+        defaultCourier: 'Delhivery Express',
+        autoSchedulePickup: true
+      };
+    }
+  });
+
+  const updateMerchantSettings = (newSettings) => {
+    setMerchantSettings(prev => {
+      const updated = { ...prev, ...newSettings };
+      try {
+        localStorage.setItem('kukukart_merchant_settings', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+  };
+
   // Sync to LocalStorage
   useEffect(() => {
     localStorage.setItem('kukukart_cart_inr_v2', JSON.stringify(cart));
@@ -309,6 +367,11 @@ export const ShopProvider = ({ children }) => {
       discountOnMRP,
       couponDiscount,
       discountAmount: couponDiscount,
+      theme,
+      setTheme,
+      toggleTheme,
+      merchantSettings,
+      updateMerchantSettings,
       deliveryFee,
       platformFee,
       cartTotal,

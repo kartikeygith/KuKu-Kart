@@ -20,11 +20,14 @@ import {
   Sparkles,
   LayoutDashboard,
   HelpCircle,
-  PhoneCall
+  PhoneCall,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { useShop } from '../../context/ShopContext';
 import { useAuth } from '../../context/AuthContext';
 import { INDIAN_CITIES_PINCODES, formatINR } from '../../utils/helpers';
+import SettingsModal from '../SettingsModal/SettingsModal';
 import './Header.css';
 
 const ANNOUNCEMENTS = [
@@ -48,7 +51,9 @@ const Header = () => {
     deliveryPincode,
     deliveryCity,
     setDeliveryPincode,
-    setDeliveryCity 
+    setDeliveryCity,
+    theme,
+    toggleTheme
   } = useShop();
 
   const { user, isAuthenticated, isAdmin, isDeliveryPartner, logout, switchRole } = useAuth();
@@ -57,6 +62,7 @@ const Header = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchFocused, setSearchFocused] = useState(false);
   const [showLocationModal, setShowLocationModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showNotifDropdown, setShowNotifDropdown] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
@@ -332,6 +338,14 @@ const Header = () => {
                     <HelpCircle size={14} /> Concierge Help & Support
                   </Link>
 
+                  <button 
+                    type="button"
+                    className="dropdown-link w-full text-left" 
+                    onClick={() => { setShowSettingsModal(true); setShowUserDropdown(false); }}
+                  >
+                    <Settings size={14} /> Store & Pickup Settings
+                  </button>
+
                   {isAdmin && (
                     <Link to="/admin" className="dropdown-link text-accent" onClick={() => setShowUserDropdown(false)}>
                       <LayoutDashboard size={14} /> Admin Executive Portal
@@ -377,6 +391,36 @@ const Header = () => {
                 </div>
               )}
             </div>
+
+            {/* Quick Theme Toggle Button */}
+            <button 
+              type="button"
+              className="header-action-item theme-switch-btn"
+              onClick={toggleTheme}
+              title={theme === 'dark' ? 'Switch to Atelier Ivory Light Theme' : 'Switch to Bugatti Dark Luxury Theme'}
+            >
+              <div className="action-icon-wrap">
+                {theme === 'dark' ? (
+                  <Sun size={20} color="var(--color-accent)" />
+                ) : (
+                  <Moon size={20} color="var(--color-accent)" />
+                )}
+              </div>
+              <span className="action-label">{theme === 'dark' ? 'Light' : 'Dark'}</span>
+            </button>
+
+            {/* Store & Courier Settings Button */}
+            <button 
+              type="button"
+              className="header-action-item settings-action-btn"
+              onClick={() => setShowSettingsModal(true)}
+              title="Store Preferences & Seller Pickup Settings"
+            >
+              <div className="action-icon-wrap">
+                <Settings size={20} />
+              </div>
+              <span className="action-label">Settings</span>
+            </button>
 
           </div>
 
@@ -596,6 +640,12 @@ const Header = () => {
           </div>
         </div>
       )}
+
+      {/* GLOBAL SETTINGS MODAL (Theme, Currency, Location, Seller Pickup) */}
+      <SettingsModal 
+        isOpen={showSettingsModal} 
+        onClose={() => setShowSettingsModal(false)} 
+      />
     </>
   );
 };

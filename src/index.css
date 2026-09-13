@@ -1,7 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@300;400;600;800&display=swap');
 
 :root {
-  /* Luxury Dark Theme */
+  /* Luxury Dark Theme (Default) */
   --color-primary: #000000;      /* Pure black */
   --color-secondary: #0a0a0a;    /* Off black */
   --color-surface: #111111;      /* Slightly lighter black for cards */
@@ -24,6 +24,25 @@
   
   --font-heading: 'Outfit', sans-serif;
   --font-body: 'Inter', sans-serif;
+}
+
+/* Luxury Light Theme (Atelier Ivory & Gold) */
+[data-theme="light"] {
+  --color-primary: #ffffff;
+  --color-secondary: #f4f5f8;
+  --color-surface: #ffffff;
+  --color-accent: #a57c38;       /* Warm luxury antique gold/bronze */
+  --color-accent-hover: #886224;
+  --color-bg: #f8f9fc;           /* Crisp luxury off-white/ivory */
+  
+  --color-text-main: #111827;    /* Obsidian dark text for high contrast */
+  --color-text-muted: #64748b;  /* Slate grey */
+  --color-white: #111827;        /* Invert standard text-white to dark */
+  --color-border: #e2e8f0;       /* Crisp luxury light borders */
+  
+  --shadow-sm: 0 4px 16px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 10px 25px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 20px 45px rgba(0, 0, 0, 0.1);
 }
 
 * {
@@ -137,4 +156,116 @@ button {
 /* Smooth scroll */
 html {
   scroll-behavior: smooth;
+}
+
+/* Color & Surface Utilities */
+.bg-surface { background-color: var(--color-surface); }
+.bg-bg { background-color: var(--color-bg); }
+.text-white { color: var(--color-text-main); }
+.text-muted { color: var(--color-text-muted); }
+.border-border { border-color: var(--color-border); }
+.text-accent { color: var(--color-accent); }
+.border-accent { border-color: var(--color-accent); }
+
+/* Light Theme Component Overrides */
+[data-theme="light"] .luxury-header {
+  background: rgba(255, 255, 255, 0.96) !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05) !important;
+}
+
+[data-theme="light"] .luxury-header.scrolled {
+  background: rgba(255, 255, 255, 0.98) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08) !important;
+  border-bottom-color: rgba(165, 124, 56, 0.25) !important;
+}
+
+[data-theme="light"] .announcement-bar {
+  background: linear-gradient(90deg, #f1f3f6, #fbf7ee, #f1f3f6) !important;
+  border-bottom: 1px solid rgba(165, 124, 56, 0.2) !important;
+  color: #4b5563 !important;
+}
+
+[data-theme="light"] .announcement-divider {
+  color: rgba(0, 0, 0, 0.15) !important;
+}
+
+[data-theme="light"] .header-search-bar {
+  background: #f1f3f7 !important;
+  border-color: #e2e8f0 !important;
+}
+
+[data-theme="light"] .header-search-input {
+  color: #111827 !important;
+}
+
+[data-theme="light"] .header-search-input::placeholder {
+  color: #94a3b8 !important;
+}
+
+[data-theme="light"] .header-dropdown,
+[data-theme="light"] .search-dropdown,
+[data-theme="light"] .user-dropdown,
+[data-theme="light"] .notif-dropdown,
+[data-theme="light"] .location-modal-card,
+[data-theme="light"] .settings-modal-card {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.12) !important;
+}
+
+[data-theme="light"] .dropdown-link:hover,
+[data-theme="light"] .search-result-item:hover,
+[data-theme="light"] .notif-item:hover {
+  background: #f8fafc !important;
+}
+
+[data-theme="light"] .category-nav-link {
+  color: #475569 !important;
+}
+
+[data-theme="light"] .category-nav-link:hover,
+[data-theme="light"] .category-nav-link.active {
+  color: var(--color-accent) !important;
+}
+
+[data-theme="light"] .product-card,
+[data-theme="light"] .cart-item-card,
+[data-theme="light"] .order-card-container,
+[data-theme="light"] .admin-card,
+[data-theme="light"] .checkout-card,
+[data-theme="light"] .category-card,
+[data-theme="light"] .profile-card,
+[data-theme="light"] .contact-card {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04) !important;
+}
+
+[data-theme="light"] .admin-table thead tr {
+  background: #f8fafc !important;
+}
+
+[data-theme="light"] .admin-table tbody tr {
+  border-color: #e2e8f0 !important;
+}
+
+[data-theme="light"] .admin-table tbody tr:hover {
+  background: #f8fafc !important;
+}
+
+[data-theme="light"] .status-select-admin {
+  background: #f1f3f7 !important;
+  border-color: #cbd5e1 !important;
+  color: #1e293b !important;
+}
+
+[data-theme="light"] .btn-secondary {
+  border-color: #cbd5e1 !important;
+  color: #1e293b !important;
+}
+
+[data-theme="light"] .btn-secondary:hover {
+  border-color: var(--color-accent) !important;
+  color: var(--color-accent) !important;
 }
