@@ -121,6 +121,40 @@
   margin-top: 12px;
 }
 
+.theme-options-grid.three-col {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.system-preview {
+  background: linear-gradient(135deg, #0a0a0c 50%, #f8f9fc 50%);
+  border-color: rgba(198, 168, 124, 0.3);
+}
+
+.system-preview .preview-nav {
+  height: 10px;
+  background: linear-gradient(90deg, #18181c 50%, #ffffff 50%);
+  border-radius: 2px;
+}
+
+.system-preview .preview-split {
+  flex: 1;
+  height: 100%;
+  border-radius: 2px;
+}
+.system-preview .preview-split.dark-half {
+  background: #121216;
+  border: 1px solid #282830;
+  margin-right: 3px;
+}
+.system-preview .preview-split.light-half {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  margin-left: 3px;
+}
+
 .theme-card {
   padding: 12px;
   border: 1px solid var(--color-border);

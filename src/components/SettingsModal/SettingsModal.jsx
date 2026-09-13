@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { 
-  X, Moon, Sun, MapPin, Truck, Bell, Check, 
+  X, Moon, Sun, Monitor, MapPin, Truck, Bell, Check, 
   Building2, ShieldCheck, Sparkles 
 } from 'lucide-react';
 import { useShop } from '../../context/ShopContext';
@@ -10,7 +10,8 @@ import './SettingsModal.css';
 const SettingsModal = ({ isOpen, onClose }) => {
   const { 
     theme, 
-    setTheme, 
+    themeMode,
+    setThemeMode,
     deliveryPincode, 
     deliveryCity, 
     setDeliveryPincode, 
@@ -117,11 +118,32 @@ const SettingsModal = ({ isOpen, onClose }) => {
                 <p className="settings-desc">Choose between high-contrast luxury dark or crisp ivory light mode.</p>
               </div>
 
-              <div className="theme-options-grid">
+              <div className="theme-options-grid three-col">
+                {/* Device Default Card */}
+                <div 
+                  className={`theme-card ${themeMode === 'system' ? 'selected' : ''}`}
+                  onClick={() => setThemeMode('system')}
+                >
+                  <div className="theme-preview system-preview">
+                    <div className="preview-nav"></div>
+                    <div className="preview-body flex justify-between">
+                      <div className="preview-split dark-half"></div>
+                      <div className="preview-split light-half"></div>
+                    </div>
+                  </div>
+                  <div className="theme-meta flex items-center justify-between mt-2">
+                    <span className="flex items-center gap-1 font-bold text-xs">
+                      <Monitor size={14} color="var(--color-accent)" /> Device Default
+                    </span>
+                    {themeMode === 'system' && <Check size={15} color="var(--color-accent)" />}
+                  </div>
+                  <span className="text-10 text-muted block mt-1">Auto-syncs with phone/OS</span>
+                </div>
+
                 {/* Dark Theme Card */}
                 <div 
-                  className={`theme-card ${theme === 'dark' ? 'selected' : ''}`}
-                  onClick={() => setTheme('dark')}
+                  className={`theme-card ${themeMode === 'dark' ? 'selected' : ''}`}
+                  onClick={() => setThemeMode('dark')}
                 >
                   <div className="theme-preview dark-preview">
                     <div className="preview-nav"></div>
@@ -131,17 +153,18 @@ const SettingsModal = ({ isOpen, onClose }) => {
                     </div>
                   </div>
                   <div className="theme-meta flex items-center justify-between mt-2">
-                    <span className="flex items-center gap-2 font-bold text-xs">
-                      <Moon size={15} color="#c6a87c" /> Bugatti Dark Luxury
+                    <span className="flex items-center gap-1 font-bold text-xs">
+                      <Moon size={14} color="#c6a87c" /> Dark Luxury
                     </span>
-                    {theme === 'dark' && <Check size={16} color="var(--color-accent)" />}
+                    {themeMode === 'dark' && <Check size={15} color="var(--color-accent)" />}
                   </div>
+                  <span className="text-10 text-muted block mt-1">Bugatti Stealth Black</span>
                 </div>
 
                 {/* Light Theme Card */}
                 <div 
-                  className={`theme-card ${theme === 'light' ? 'selected' : ''}`}
-                  onClick={() => setTheme('light')}
+                  className={`theme-card ${themeMode === 'light' ? 'selected' : ''}`}
+                  onClick={() => setThemeMode('light')}
                 >
                   <div className="theme-preview light-preview">
                     <div className="preview-nav"></div>
@@ -151,11 +174,12 @@ const SettingsModal = ({ isOpen, onClose }) => {
                     </div>
                   </div>
                   <div className="theme-meta flex items-center justify-between mt-2">
-                    <span className="flex items-center gap-2 font-bold text-xs">
-                      <Sun size={15} color="#a57c38" /> Atelier Ivory Light
+                    <span className="flex items-center gap-1 font-bold text-xs">
+                      <Sun size={14} color="#a57c38" /> Ivory Light
                     </span>
-                    {theme === 'light' && <Check size={16} color="var(--color-accent)" />}
+                    {themeMode === 'light' && <Check size={15} color="var(--color-accent)" />}
                   </div>
+                  <span className="text-10 text-muted block mt-1">Atelier Champagne</span>
                 </div>
               </div>
 

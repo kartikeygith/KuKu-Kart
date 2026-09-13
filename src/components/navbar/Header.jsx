@@ -392,22 +392,6 @@ const Header = () => {
               )}
             </div>
 
-            {/* Quick Theme Toggle Button */}
-            <button 
-              type="button"
-              className="header-action-item theme-switch-btn"
-              onClick={toggleTheme}
-              title={theme === 'dark' ? 'Switch to Atelier Ivory Light Theme' : 'Switch to Bugatti Dark Luxury Theme'}
-            >
-              <div className="action-icon-wrap">
-                {theme === 'dark' ? (
-                  <Sun size={20} color="var(--color-accent)" />
-                ) : (
-                  <Moon size={20} color="var(--color-accent)" />
-                )}
-              </div>
-              <span className="action-label">{theme === 'dark' ? 'Light' : 'Dark'}</span>
-            </button>
 
             {/* Store & Courier Settings Button */}
             <button 

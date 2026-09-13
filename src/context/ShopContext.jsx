@@ -122,24 +122,52 @@ export const ShopProvider = ({ children }) => {
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [couponError, setCouponError] = useState(null);
 
-  // Theme: 'dark' | 'light'
-  const [theme, setTheme] = useState(() => {
+  // Theme Mode: 'system' | 'dark' | 'light'
+  const [themeMode, setThemeMode] = useState(() => {
     try {
-      return localStorage.getItem('kukukart_theme') || 'dark';
+      return localStorage.getItem('kukukart_theme_mode') || 'system';
     } catch (e) {
-      return 'dark';
+      return 'system';
     }
   });
 
+  const [effectiveTheme, setEffectiveTheme] = useState('dark');
+
   useEffect(() => {
+    const applyTheme = () => {
+      let resolved = 'dark';
+      if (themeMode === 'system') {
+        const isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        resolved = isDark ? 'dark' : 'light';
+      } else {
+        resolved = themeMode;
+      }
+      setEffectiveTheme(resolved);
+      document.documentElement.setAttribute('data-theme', resolved);
+    };
+
+    applyTheme();
+
     try {
-      localStorage.setItem('kukukart_theme', theme);
-      document.documentElement.setAttribute('data-theme', theme);
+      localStorage.setItem('kukukart_theme_mode', themeMode);
     } catch (e) {}
-  }, [theme]);
+
+    // Listen to OS device color scheme change when in system mode
+    if (themeMode === 'system' && window.matchMedia) {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      const listener = () => applyTheme();
+      if (mediaQuery.addEventListener) {
+        mediaQuery.addEventListener('change', listener);
+        return () => mediaQuery.removeEventListener('change', listener);
+      } else if (mediaQuery.addListener) {
+        mediaQuery.addListener(listener);
+        return () => mediaQuery.removeListener(listener);
+      }
+    }
+  }, [themeMode]);
 
   const toggleTheme = () => {
-    setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
+    setThemeMode(prev => (prev === 'dark' ? 'light' : 'dark'));
   };
 
   // Merchant & Courier Pickup Settings (Who picks up orders from seller)
@@ -367,8 +395,10 @@ export const ShopProvider = ({ children }) => {
       discountOnMRP,
       couponDiscount,
       discountAmount: couponDiscount,
-      theme,
-      setTheme,
+      theme: effectiveTheme,
+      themeMode,
+      setThemeMode,
+      setTheme: setThemeMode,
       toggleTheme,
       merchantSettings,
       updateMerchantSettings,
