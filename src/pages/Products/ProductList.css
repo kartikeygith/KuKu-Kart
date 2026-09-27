@@ -12,7 +12,7 @@
   font-size: 28px;
   font-weight: 300;
   letter-spacing: 4px;
-  color: #fff;
+  color: var(--color-text-main);
 }
 
 .view-btn {
@@ -26,7 +26,7 @@
 .sort-select {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  color: #fff;
+  color: var(--color-text-main);
   padding: 6px 12px;
   font-size: 12px;
   outline: none;
@@ -173,7 +173,7 @@
   font-family: var(--font-heading);
   font-size: 13px;
   letter-spacing: 1px;
-  color: #fff;
+  color: var(--color-text-main);
   display: -webkit-box;
   -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;

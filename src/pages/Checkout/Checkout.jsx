@@ -181,10 +181,12 @@ const Checkout = () => {
       try {
         await supabase.from('orders').insert([{
           order_number: orderNumber,
+          user_id: user?.id || null,
           client_name: orderPayload.client_name,
           client_email: orderPayload.client_email,
           client_phone: orderPayload.client_phone,
           shipping_address: { address: destinationStr, pincode: selectedAddress.pincode },
+          items: cart,
           total_amount: cartMRP,
           discount_amount: discountOnMRP,
           coupon_discount: discountAmount,
@@ -196,7 +198,7 @@ const Checkout = () => {
           estimated_delivery_date: estDelivery
         }]);
       } catch (err) {
-        console.warn('Supabase local sync fallback');
+        console.warn('Supabase local sync fallback', err);
       }
 
       addNotification('Order Confirmed', `Order #${orderNumber} placed successfully via Cash on Delivery.`, 'ORDER');
@@ -287,10 +289,12 @@ const Checkout = () => {
           try {
             await supabase.from('orders').insert([{
               order_number: orderNumber,
+              user_id: user?.id || null,
               client_name: orderPayload.client_name,
               client_email: orderPayload.client_email,
               client_phone: orderPayload.client_phone,
               shipping_address: { address: destinationStr, pincode: selectedAddress.pincode },
+              items: cart,
               total_amount: cartMRP,
               discount_amount: discountOnMRP,
               coupon_discount: discountAmount,
@@ -303,7 +307,9 @@ const Checkout = () => {
               razorpay_payment_id: response.razorpay_payment_id || 'pay_' + Date.now(),
               estimated_delivery_date: estDelivery
             }]);
-          } catch (dbErr) {}
+          } catch (dbErr) {
+            console.warn('Supabase online order insert fallback', dbErr);
+          }
 
           addNotification('Payment Successful', `Order #${orderNumber} confirmed (${formatINR(cartTotal)}).`, 'ORDER');
           clearCart();

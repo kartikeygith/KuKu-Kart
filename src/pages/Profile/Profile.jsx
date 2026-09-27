@@ -23,7 +23,7 @@ import './Profile.css';
 
 const Profile = () => {
   const navigate = useNavigate();
-  const { user, logout, switchRole } = useAuth();
+  const { user, updateProfile, logout } = useAuth();
   const { 
     addresses, 
     addAddress, 
@@ -37,9 +37,19 @@ const Profile = () => {
   const [activeTab, setActiveTab] = useState('profile'); // 'profile' | 'addresses' | 'notifications' | 'coupons'
 
   // Personal Info Edit state
-  const [fullName, setFullName] = useState(user?.full_name || 'Kartikey Sharma');
-  const [phone, setPhone] = useState(user?.phone || '+91 9876543210');
+  const [fullName, setFullName] = useState(user?.full_name || '');
+  const [phone, setPhone] = useState(user?.phone || '');
   const [profileSaved, setProfileSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [profileMsg, setProfileMsg] = useState('');
+
+  // Keep fields synchronized when user updates
+  React.useEffect(() => {
+    if (user) {
+      setFullName(user.full_name || '');
+      setPhone(user.phone || '');
+    }
+  }, [user]);
 
   // Address Modal state
   const [showAddressModal, setShowAddressModal] = useState(false);
@@ -54,10 +64,22 @@ const Profile = () => {
 
   const [copiedCoupon, setCopiedCoupon] = useState(null);
 
-  const handleSaveProfile = (e) => {
+  const handleSaveProfile = async (e) => {
     e.preventDefault();
-    setProfileSaved(true);
-    setTimeout(() => setProfileSaved(false), 2000);
+    setSaving(true);
+    setProfileMsg('');
+    const res = await updateProfile({
+      full_name: fullName.trim(),
+      phone: phone.trim()
+    });
+    setSaving(false);
+    if (res.success) {
+      setProfileSaved(true);
+      setProfileMsg('Profile saved successfully in database.');
+      setTimeout(() => setProfileSaved(false), 3000);
+    } else {
+      setProfileMsg('Failed to update: ' + (res.error || 'Unknown error'));
+    }
   };
 
   const handleAddAddress = (e) => {
@@ -81,6 +103,21 @@ const Profile = () => {
     setCopiedCoupon(code);
     setTimeout(() => setCopiedCoupon(null), 2000);
   };
+
+  if (!user) {
+    return (
+      <div className="profile-page-container container py-16 text-center">
+        <div className="profile-card p-12 border border-border bg-surface max-w-md mx-auto">
+          <User size={48} className="mx-auto text-accent mb-4" />
+          <h2 className="text-xl font-heading mb-2">Sign In to Your Account</h2>
+          <p className="text-xs text-muted mb-6">Please sign in to access your personal profile, saved addresses, and active orders.</p>
+          <Link to="/login" className="btn-primary py-3 px-8 font-bold inline-block">
+            SIGN IN / REGISTER
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="profile-page-container container">
@@ -147,30 +184,23 @@ const Profile = () => {
             <Heart size={15} /> Private Wishlist ({wishlistCount})
           </Link>
 
-          {/* Demo Role Switcher */}
-          <div className="role-switch-section p-3 border-t border-border mt-4">
-            <span className="text-10 text-muted uppercase tracking-wider block mb-2">SWITCH ROLE (DEMO):</span>
-            <div className="flex flex-col gap-1">
-              <button 
-                className={`role-choice-btn ${user?.role === 'customer' ? 'active' : ''}`}
-                onClick={() => switchRole('customer')}
-              >
-                Customer Role
-              </button>
-              <button 
-                className={`role-choice-btn ${user?.role === 'admin' ? 'active' : ''}`}
-                onClick={() => { switchRole('admin'); navigate('/admin'); }}
-              >
-                Master Admin Portal
-              </button>
-              <button 
-                className={`role-choice-btn ${user?.role === 'delivery_partner' ? 'active' : ''}`}
-                onClick={() => { switchRole('delivery_partner'); navigate('/delivery'); }}
-              >
-                Delivery Partner Portal
-              </button>
-            </div>
-          </div>
+          {user?.role === 'seller' && (
+            <Link to="/seller" className="profile-tab-btn text-accent font-bold mt-2 pt-2 border-t border-border">
+              <Crown size={15} /> Seller Dashboard
+            </Link>
+          )}
+
+          {user?.role === 'admin' && (
+            <Link to="/admin" className="profile-tab-btn text-accent font-bold mt-2 pt-2 border-t border-border">
+              <ShieldCheck size={15} /> Admin Executive Portal
+            </Link>
+          )}
+
+          {user?.role === 'delivery_partner' && (
+            <Link to="/delivery" className="profile-tab-btn text-success font-bold mt-2 pt-2 border-t border-border">
+              <Package size={15} /> Delivery Partner Console
+            </Link>
+          )}
 
           <button onClick={logout} className="profile-tab-btn text-error mt-4 pt-3 border-t border-border">
             <LogOut size={15} /> Sign Out of Suite
@@ -195,7 +225,7 @@ const Profile = () => {
 
                 <div className="form-group flex-col">
                   <label className="text-accent mb-1">EMAIL ADDRESS (VERIFIED)</label>
-                  <input type="email" value={user?.email || 'kartikey@gmail.com'} disabled className="opacity-60" />
+                  <input type="email" value={user?.email || ''} disabled className="opacity-60 cursor-not-allowed" />
                 </div>
 
                 <div className="form-group flex-col">
@@ -203,8 +233,14 @@ const Profile = () => {
                   <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required />
                 </div>
 
-                <button type="submit" className="btn-primary py-3 font-bold tracking-wider mt-2 flex items-center justify-center gap-2">
-                  {profileSaved ? <><Check size={14} /> CHANGES SAVED</> : 'SAVE PROFILE CHANGES'}
+                {profileMsg && (
+                  <p className={`text-xs ${profileSaved ? 'text-success' : 'text-error'} flex items-center gap-1`}>
+                    {profileSaved ? <Check size={14} /> : null} {profileMsg}
+                  </p>
+                )}
+
+                <button type="submit" className="btn-primary py-3 font-bold tracking-wider mt-2 flex items-center justify-center gap-2" disabled={saving}>
+                  {saving ? 'UPDATING IN DATABASE...' : (profileSaved ? <><Check size={14} /> CHANGES SAVED</> : 'SAVE PROFILE CHANGES')}
                 </button>
               </form>
             </div>

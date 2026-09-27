@@ -8,7 +8,7 @@
   font-size: 26px;
   font-weight: 300;
   letter-spacing: 4px;
-  color: #fff;
+  color: var(--color-text-main);
 }
 
 .cart-item-thumb {
@@ -29,7 +29,7 @@
   font-family: var(--font-heading);
   font-size: 14px;
   letter-spacing: 0.5px;
-  color: #fff;
+  color: var(--color-text-main);
 }
 .cart-item-title:hover { color: var(--color-accent); }
 
@@ -45,7 +45,7 @@
 }
 .stepper-btn {
   padding: 4px 10px;
-  color: #fff;
+  color: var(--color-text-main);
   font-size: 14px;
   background: transparent;
   cursor: pointer;
@@ -63,7 +63,7 @@
 .coupon-input-field {
   background: var(--color-bg);
   border: 1px solid var(--color-border);
-  color: #fff;
+  color: var(--color-text-main);
   padding: 8px 12px;
   font-size: 12px;
   text-transform: uppercase;

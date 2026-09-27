@@ -19,6 +19,7 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { useShop } from '../../context/ShopContext';
+import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../lib/supabaseClient';
 import { formatDate, formatINR } from '../../utils/helpers';
 import './OrderTracker.css';
@@ -32,90 +33,14 @@ const ORDER_STAGES = [
   'Delivered'
 ];
 
-const DEFAULT_ORDERS = [
-  {
-    id: 'ord-101',
-    order_number: 'KUKU-892104',
-    client_name: 'Kartikey Sharma',
-    shipping_address: 'Suite 402, Royal Residency, Connaught Place, New Delhi - 110001',
-    final_amount: 24999,
-    status: 'Shipped',
-    payment_method: 'Razorpay Online (UPI)',
-    payment_status: 'Paid',
-    courier_partner: 'Delhivery Express',
-    tracking_number: 'DEL-892104-IN',
-    tracking_url: 'https://www.delhivery.com/track/package/DEL-892104-IN',
-    created_at: new Date(Date.now() - 86400000).toISOString(),
-    estimated_delivery_date: 'Tomorrow by 2:00 PM',
-    items: [
-      {
-        id: 'a1',
-        title: 'The Sovereign Chronograph',
-        image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&q=80',
-        price: 24999,
-        quantity: 1,
-        size: '42mm Case'
-      }
-    ]
-  },
-  {
-    id: 'ord-102',
-    order_number: 'KUKU-749102',
-    client_name: 'Kartikey Sharma',
-    shipping_address: 'Floor 18, Horizon Tower, Nariman Point, Mumbai - 400001',
-    final_amount: 6499,
-    status: 'Delivered',
-    payment_method: 'Razorpay (Card)',
-    payment_status: 'Paid',
-    courier_partner: 'Blue Dart Priority',
-    tracking_number: 'BD-749102-IN',
-    tracking_url: 'https://www.bluedart.com',
-    created_at: new Date(Date.now() - 432000000).toISOString(),
-    estimated_delivery_date: 'Delivered on Mon, 25 Aug',
-    items: [
-      {
-        id: 'e1',
-        title: 'Aura Studio Wireless Headphones',
-        image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&q=80',
-        price: 6499,
-        quantity: 1,
-        size: 'Standard Edition'
-      }
-    ]
-  },
-  {
-    id: 'ord-103',
-    order_number: 'KUKU-639108',
-    client_name: 'Kartikey Sharma',
-    shipping_address: 'Bungalow 7, Amrita Shergill Marg, New Delhi - 110003',
-    final_amount: 14999,
-    status: 'Order Placed',
-    payment_method: 'Cash on Delivery (COD)',
-    payment_status: 'Pending',
-    courier_partner: 'DTDC Courier',
-    tracking_number: 'Pending Dispatch',
-    tracking_url: '',
-    created_at: new Date(Date.now() - 10800000).toISOString(),
-    estimated_delivery_date: 'In 2 Business Days',
-    items: [
-      {
-        id: 'm2',
-        title: 'Savile Row Velvet Tuxedo Jacket',
-        image: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=800&q=80',
-        price: 14999,
-        quantity: 1,
-        size: '40 Regular'
-      }
-    ]
-  }
-];
-
 const OrderTracker = () => {
   const { orderId } = useParams();
   const { addToCart, addNotification } = useShop();
+  const { user, isAuthenticated, isAdmin } = useAuth();
 
-  const [ordersList, setOrdersList] = useState(DEFAULT_ORDERS);
-  const [selectedOrder, setSelectedOrder] = useState(DEFAULT_ORDERS[0]);
+  const [ordersList, setOrdersList] = useState([]);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [searchTerm, setSearchTerm] = useState('');
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
@@ -123,25 +48,45 @@ const OrderTracker = () => {
 
   useEffect(() => {
     const fetchOrders = async () => {
+      setLoading(true);
       try {
-        const { data, error } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
-        if (!error && data && data.length > 0) {
-          setOrdersList(prev => {
-            const newOrders = data.filter(d => !prev.some(p => p.order_number === d.order_number));
-            const merged = [...newOrders, ...prev];
-            
-            // If orderId param present, auto-select it
-            if (orderId) {
-              const matched = merged.find(o => o.order_number === orderId);
-              if (matched) setSelectedOrder(matched);
-            }
-            return merged;
-          });
+        let query = supabase.from('orders').select('*');
+        
+        if (orderId) {
+          query = query.eq('order_number', orderId);
+        } else if (isAuthenticated && user) {
+          if (!isAdmin) {
+            query = query.or(`user_id.eq.${user.id},client_email.eq.${user.email}`);
+          }
+        } else {
+          // Unauthenticated guest with no specific order ID
+          setOrdersList([]);
+          setSelectedOrder(null);
+          setLoading(false);
+          return;
         }
-      } catch (e) {}
+
+        const { data, error } = await query.order('created_at', { ascending: false });
+        if (!error && data && data.length > 0) {
+          setOrdersList(data);
+          if (orderId) {
+            const matched = data.find(o => o.order_number === orderId);
+            setSelectedOrder(matched || data[0]);
+          } else {
+            setSelectedOrder(data[0]);
+          }
+        } else {
+          setOrdersList([]);
+          setSelectedOrder(null);
+        }
+      } catch (e) {
+        console.warn('Orders query fallback', e);
+      } finally {
+        setLoading(false);
+      }
     };
     fetchOrders();
-  }, [orderId]);
+  }, [orderId, isAuthenticated, user]);
 
   useEffect(() => {
     if (orderId && ordersList.length > 0) {
@@ -149,6 +94,27 @@ const OrderTracker = () => {
       if (match) setSelectedOrder(match);
     }
   }, [orderId, ordersList]);
+
+  const handleTrackByNumber = async (e) => {
+    e.preventDefault();
+    if (!searchTerm.trim()) return;
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('order_number', searchTerm.trim().toUpperCase())
+        .maybeSingle();
+
+      if (!error && data) {
+        setOrdersList([data]);
+        setSelectedOrder(data);
+      } else {
+        alert(`No order found with Tracking ID #${searchTerm.trim().toUpperCase()}`);
+      }
+    } catch (err) {}
+    setLoading(false);
+  };
 
   const getStageIndex = (status) => {
     const idx = ORDER_STAGES.indexOf(status);
@@ -226,24 +192,36 @@ const OrderTracker = () => {
           ))}
         </div>
 
-        <div className="order-search-input-box flex items-center gap-2 p-2 border border-border bg-surface rounded">
+        <form onSubmit={handleTrackByNumber} className="order-search-input-box flex items-center gap-2 p-2 border border-border bg-surface rounded">
           <Search size={14} className="text-muted" />
           <input 
             type="text" 
-            placeholder="Search Order ID..."
+            placeholder="Track Order # (e.g. KUKU-892104)..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="bg-transparent border-none text-xs text-white outline-none w-48"
+            className="bg-transparent border-none text-xs text-white outline-none w-56"
           />
-        </div>
+          <button type="submit" className="text-10 text-accent font-bold uppercase hover:underline">
+            TRACK
+          </button>
+        </form>
       </div>
 
       {filteredOrders.length === 0 ? (
         <div className="empty-orders-state p-16 text-center border border-border bg-surface flex-col items-center rounded">
           <Package size={48} color="var(--color-accent)" className="mb-4" />
           <h2 className="text-lg font-heading tracking-widest text-white mb-2">NO MATCHING ORDERS FOUND</h2>
-          <p className="text-xs text-muted max-w-md mx-auto mb-6">Explore our showroom collections to place your next order.</p>
-          <Link to="/products" className="btn-primary">EXPLORE SHOWROOM</Link>
+          <p className="text-xs text-muted max-w-md mx-auto mb-6">
+            {!isAuthenticated 
+              ? 'You are currently browsing as a guest. Enter your Order Tracking Number above to locate your shipment, or sign in to view your complete orders archive.' 
+              : 'You do not have any orders matching this filter yet. Explore our showroom collections to place your next acquisition.'}
+          </p>
+          <div className="flex gap-4 justify-center">
+            {!isAuthenticated && (
+              <Link to="/login" className="btn-primary">SIGN IN TO SUITE</Link>
+            )}
+            <Link to="/products" className="btn-secondary">EXPLORE SHOWROOM</Link>
+          </div>
         </div>
       ) : (
         <div className="orders-grid-layout flex gap-8">

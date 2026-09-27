@@ -43,9 +43,9 @@ const Footer = () => {
             <h4>SECURITY & LEGAL</h4>
             <ul>
               <li><Link to="/contact">About KuKu Kart India</Link></li>
-              <li><Link to="/contact">Privacy & Data Policy</Link></li>
+              <li><Link to="/privacy">Privacy & Data Policy</Link></li>
               <li><Link to="/contact">Terms of Commerce</Link></li>
-              <li><Link to="/admin">Executive Merchant Console</Link></li>
+              <li><Link to="/seller">Merchant & Seller Hub</Link></li>
             </ul>
           </div>
 

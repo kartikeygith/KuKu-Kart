@@ -8,7 +8,7 @@
   font-size: 26px;
   font-weight: 300;
   letter-spacing: 4px;
-  color: #fff;
+  color: var(--color-text-main);
 }
 
 .wishlist-card {
@@ -55,7 +55,7 @@
   font-family: var(--font-heading);
   font-size: 13px;
   letter-spacing: 0.5px;
-  color: #fff;
+  color: var(--color-text-main);
   display: -webkit-box;
   -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;

@@ -7,14 +7,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
     try {
       const saved = localStorage.getItem('kukukart_user');
-      return saved ? JSON.parse(saved) : {
-        id: 'usr_kartikey',
-        email: 'kartikey@gmail.com',
-        full_name: 'Kartikey Sharma',
-        phone: '+91 9876543210',
-        role: 'admin', // default to admin for full dashboard privileges
-        avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&q=80'
-      };
+      return saved ? JSON.parse(saved) : null;
     } catch (e) {
       return null;
     }
@@ -23,6 +16,89 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const [authError, setAuthError] = useState(null);
 
+  // Sync profile data from Supabase profiles table
+  const syncUserProfile = async (authUser) => {
+    if (!authUser) return null;
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', authUser.id)
+        .maybeSingle();
+
+      if (!error && data) {
+        const syncedUser = {
+          id: authUser.id,
+          email: authUser.email,
+          full_name: data.full_name || authUser.user_metadata?.full_name || authUser.email.split('@')[0],
+          phone: data.phone || authUser.user_metadata?.phone || '',
+          role: data.role || authUser.user_metadata?.role || (authUser.email.includes('admin') ? 'admin' : 'customer'),
+          avatar_url: data.avatar_url || authUser.user_metadata?.avatar_url || ''
+        };
+        setUser(syncedUser);
+        return syncedUser;
+      } else {
+        // If profile doesn't exist yet, insert it
+        const role = authUser.user_metadata?.role || (authUser.email.includes('admin') ? 'admin' : 'customer');
+        const newProfile = {
+          id: authUser.id,
+          email: authUser.email,
+          full_name: authUser.user_metadata?.full_name || authUser.email.split('@')[0],
+          phone: authUser.user_metadata?.phone || '',
+          role
+        };
+        try {
+          await supabase.from('profiles').upsert([newProfile]);
+        } catch (e) {}
+        setUser(newProfile);
+        return newProfile;
+      }
+    } catch (e) {
+      const fallbackUser = {
+        id: authUser.id,
+        email: authUser.email,
+        full_name: authUser.user_metadata?.full_name || authUser.email.split('@')[0],
+        phone: authUser.user_metadata?.phone || '',
+        role: authUser.user_metadata?.role || 'customer'
+      };
+      setUser(fallbackUser);
+      return fallbackUser;
+    }
+  };
+
+  // Sync session on mount and listen to auth state changes
+  useEffect(() => {
+    let mounted = true;
+
+    const initAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (mounted && session?.user) {
+          await syncUserProfile(session.user);
+        }
+      } catch (err) {
+        console.warn('Auth session check fallback', err);
+      }
+    };
+
+    initAuth();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!mounted) return;
+      if (session?.user) {
+        await syncUserProfile(session.user);
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null);
+      }
+    });
+
+    return () => {
+      mounted = false;
+      authListener?.subscription?.unsubscribe();
+    };
+  }, []);
+
+  // Sync to localStorage
   useEffect(() => {
     if (user) {
       localStorage.setItem('kukukart_user', JSON.stringify(user));
@@ -36,6 +112,7 @@ export const AuthProvider = ({ children }) => {
     setLoading(true);
     setAuthError(null);
     try {
+      // Direct Admin & Courier credentials fallback
       if (email === 'admin@kukukart.com' && password === 'Admin@123') {
         const adminUser = {
           id: 'admin_master',
@@ -63,15 +140,8 @@ export const AuthProvider = ({ children }) => {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
 
-      const loggedUser = {
-        id: data.user.id,
-        email: data.user.email,
-        full_name: data.user.user_metadata?.full_name || email.split('@')[0],
-        role: data.user.user_metadata?.role || (email.includes('admin') ? 'admin' : 'customer'),
-        phone: data.user.user_metadata?.phone || ''
-      };
-      setUser(loggedUser);
-      return { success: true, user: loggedUser };
+      const synced = await syncUserProfile(data.user);
+      return { success: true, user: synced || user };
     } catch (err) {
       setAuthError(err.message);
       return { success: false, error: err.message };
@@ -81,7 +151,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Register
-  const signup = async (email, password, full_name, phone) => {
+  const signup = async (email, password, full_name, phone, role = 'customer') => {
     setLoading(true);
     setAuthError(null);
     try {
@@ -89,7 +159,7 @@ export const AuthProvider = ({ children }) => {
         email,
         password,
         options: {
-          data: { full_name, phone, role: 'customer' }
+          data: { full_name, phone, role }
         }
       });
       if (error) throw error;
@@ -99,8 +169,21 @@ export const AuthProvider = ({ children }) => {
         email,
         full_name,
         phone,
-        role: 'customer'
+        role
       };
+
+      try {
+        if (data.user?.id) {
+          await supabase.from('profiles').upsert([{
+            id: data.user.id,
+            email,
+            full_name,
+            phone,
+            role
+          }]);
+        }
+      } catch (e) {}
+
       setUser(newUser);
       return { success: true, user: newUser };
     } catch (err) {
@@ -111,7 +194,46 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Switch Role (For effortless testing in demo)
+  // Update Profile (Persists to Supabase profiles table)
+  const updateProfile = async (updates) => {
+    if (!user) return { success: false, error: 'No active user session' };
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .upsert([{
+          id: user.id,
+          email: user.email,
+          full_name: updates.full_name,
+          phone: updates.phone,
+          ...(updates.avatar_url ? { avatar_url: updates.avatar_url } : {}),
+          updated_at: new Date().toISOString()
+        }]);
+
+      if (error) {
+        console.warn('Supabase profile update warning:', error);
+      }
+
+      try {
+        await supabase.auth.updateUser({
+          data: {
+            full_name: updates.full_name,
+            phone: updates.phone
+          }
+        });
+      } catch (e) {}
+
+      const updated = { ...user, ...updates };
+      setUser(updated);
+      return { success: true, user: updated };
+    } catch (err) {
+      return { success: false, error: err.message };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Switch Role (For internal administrative simulation)
   const switchRole = (newRole) => {
     if (user) {
       const updated = { ...user, role: newRole };
@@ -125,6 +247,7 @@ export const AuthProvider = ({ children }) => {
       await supabase.auth.signOut();
     } catch (e) {}
     setUser(null);
+    localStorage.removeItem('kukukart_user');
   };
 
   return (
@@ -132,11 +255,14 @@ export const AuthProvider = ({ children }) => {
       user,
       isAuthenticated: !!user,
       isAdmin: user?.role === 'admin',
+      isSeller: user?.role === 'seller',
+      isCustomer: !user || user?.role === 'customer',
       isDeliveryPartner: user?.role === 'delivery_partner',
       loading,
       authError,
       login,
       signup,
+      updateProfile,
       logout,
       switchRole
     }}>

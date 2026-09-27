@@ -35,9 +35,11 @@ const Auth = () => {
   const [otpNotice, setOtpNotice] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
-  const validateGmail = (emailStr) => {
+  const [registerRole, setRegisterRole] = useState('customer'); // 'customer' | 'seller'
+
+  const validateEmail = (emailStr) => {
     const trimmed = emailStr.trim().toLowerCase();
-    return trimmed.endsWith('@gmail.com');
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed);
   };
 
   const handleSendOtp = async (e) => {
@@ -46,15 +48,15 @@ const Auth = () => {
     setOtpNotice('');
 
     if (authMethod === 'email') {
-      if (!validateGmail(email)) {
-        setErrorMessage('Exclusive privilege: Only @gmail.com accounts are permitted.');
+      if (!validateEmail(email)) {
+        setErrorMessage('Please enter a valid email address.');
         return;
       }
       try {
         await supabase.auth.signInWithOtp({ email: email.trim().toLowerCase() });
       } catch (err) {}
       setOtpSent(true);
-      setOtpNotice(`6-digit confidential passkey transmitted to ${email}`);
+      setOtpNotice(`6-digit passkey sent to ${email}`);
     } else {
       if (phone.length < 10) {
         setErrorMessage('Please enter a valid 10-digit mobile phone number.');
@@ -75,9 +77,15 @@ const Auth = () => {
       return;
     }
 
-    // Auto authenticate into session
-    await login(email || `${phone}@kukukart.com`, 'demo_pass');
-    navigate('/profile');
+    // Authenticate session
+    const res = await login(email || `${phone}@kukukart.com`, 'demo_pass');
+    if (res.success) {
+      const redirectUrl = new URLSearchParams(window.location.search).get('redirect');
+      if (redirectUrl) navigate(redirectUrl);
+      else if (res.user.role === 'admin') navigate('/admin');
+      else if (res.user.role === 'seller') navigate('/seller');
+      else navigate('/profile');
+    }
   };
 
   const handlePasswordLogin = async (e) => {
@@ -85,36 +93,38 @@ const Auth = () => {
     setErrorMessage('');
     const res = await login(email, password);
     if (res.success) {
-      if (res.user.role === 'admin') navigate('/admin');
-      else if (res.user.role === 'delivery_partner') navigate('/delivery');
-      else navigate('/profile');
+      const redirectUrl = new URLSearchParams(window.location.search).get('redirect');
+      if (redirectUrl) {
+        navigate(redirectUrl);
+      } else if (res.user.role === 'admin') {
+        navigate('/admin');
+      } else if (res.user.role === 'seller') {
+        navigate('/seller');
+      } else if (res.user.role === 'delivery_partner') {
+        navigate('/delivery');
+      } else {
+        navigate('/profile');
+      }
     } else {
-      setErrorMessage(res.error || 'Invalid credentials.');
+      setErrorMessage(res.error || 'Invalid email or password.');
     }
   };
 
   const handleRegister = async (e) => {
     e.preventDefault();
     setErrorMessage('');
-    if (!validateGmail(email)) {
-      setErrorMessage('Please register with a valid @gmail.com address.');
+    if (!validateEmail(email)) {
+      setErrorMessage('Please enter a valid email address.');
       return;
     }
-    const res = await signup(email, password, fullName, phone);
+    const res = await signup(email, password, fullName, phone, registerRole);
     if (res.success) {
-      navigate('/profile');
+      const redirectUrl = new URLSearchParams(window.location.search).get('redirect');
+      if (redirectUrl) navigate(redirectUrl);
+      else if (registerRole === 'seller') navigate('/seller');
+      else navigate('/profile');
     } else {
       setErrorMessage(res.error || 'Registration failed.');
-    }
-  };
-
-  const quickDemoLogin = (demoRole) => {
-    if (demoRole === 'admin') {
-      login('admin@kukukart.com', 'Admin@123').then(() => navigate('/admin'));
-    } else if (demoRole === 'delivery') {
-      login('delivery@kukukart.com', 'demo').then(() => navigate('/delivery'));
-    } else {
-      login('kartikey@gmail.com', 'demo').then(() => navigate('/profile'));
     }
   };
 
@@ -284,10 +294,30 @@ const Auth = () => {
         {authMode === 'register' && (
           <form onSubmit={handleRegister} className="flex-col gap-3 text-xs">
             <div className="form-group flex-col">
+              <label className="text-accent mb-1">ACCOUNT TYPE</label>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  className={`flex-1 py-2 text-center border text-xs font-semibold ${registerRole === 'customer' ? 'border-accent text-accent bg-surface' : 'border-border text-muted'}`}
+                  onClick={() => setRegisterRole('customer')}
+                >
+                  Customer Account
+                </button>
+                <button
+                  type="button"
+                  className={`flex-1 py-2 text-center border text-xs font-semibold ${registerRole === 'seller' ? 'border-accent text-accent bg-surface' : 'border-border text-muted'}`}
+                  onClick={() => setRegisterRole('seller')}
+                >
+                  Merchant / Seller
+                </button>
+              </div>
+            </div>
+
+            <div className="form-group flex-col">
               <label className="text-accent mb-1">FULL NAME</label>
               <input 
                 type="text" 
-                placeholder="Kartikey Sharma"
+                placeholder="Your Full Name"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 required 
@@ -295,10 +325,10 @@ const Auth = () => {
             </div>
 
             <div className="form-group flex-col">
-              <label className="text-accent mb-1">GMAIL ADDRESS</label>
+              <label className="text-accent mb-1">EMAIL ADDRESS</label>
               <input 
                 type="email" 
-                placeholder="yourname@gmail.com"
+                placeholder="yourname@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required 
@@ -317,7 +347,7 @@ const Auth = () => {
             </div>
 
             <div className="form-group flex-col">
-              <label className="text-accent mb-1">CREATE MASTER PASSWORD</label>
+              <label className="text-accent mb-1">CREATE PASSWORD</label>
               <input 
                 type="password" 
                 placeholder="Minimum 6 characters"
@@ -332,26 +362,10 @@ const Auth = () => {
             )}
 
             <button type="submit" className="btn-primary w-full py-3 font-bold mt-2" disabled={loading}>
-              {loading ? 'REGISTERING...' : 'ENROLL NEW CLIENT ACCOUNT'}
+              {loading ? 'REGISTERING...' : (registerRole === 'seller' ? 'ENROLL AS MERCHANT / SELLER' : 'ENROLL NEW CLIENT ACCOUNT')}
             </button>
           </form>
         )}
-
-        {/* Quick Demo Logins Bar */}
-        <div className="demo-accounts-bar pt-6 border-t border-border mt-6 text-center">
-          <span className="text-10 text-muted uppercase tracking-wider block mb-2">QUICK DEMO ACCESS (1-CLICK):</span>
-          <div className="flex justify-center gap-2 text-10">
-            <button onClick={() => quickDemoLogin('customer')} className="demo-btn">
-              Client
-            </button>
-            <button onClick={() => quickDemoLogin('admin')} className="demo-btn text-accent font-bold">
-              Admin
-            </button>
-            <button onClick={() => quickDemoLogin('delivery')} className="demo-btn text-success">
-              Courier
-            </button>
-          </div>
-        </div>
 
       </div>
     </div>

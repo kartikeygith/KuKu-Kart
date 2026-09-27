@@ -1,0 +1,91 @@
+.seller-dashboard-container {
+  padding-top: 40px;
+  padding-bottom: 80px;
+}
+
+.seller-title {
+  font-size: 24px;
+  letter-spacing: 2px;
+  color: var(--color-text-main);
+}
+
+.seller-tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  font-size: 12px;
+  font-family: var(--font-heading);
+  letter-spacing: 1px;
+  color: var(--color-text-muted);
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.seller-tab-btn:hover {
+  color: var(--color-text-main);
+}
+
+.seller-tab-btn.active {
+  color: var(--color-accent);
+  border-bottom-color: var(--color-accent);
+  font-weight: 600;
+}
+
+.seller-table {
+  border-collapse: collapse;
+}
+
+.seller-table th {
+  color: var(--color-text-muted);
+  font-size: 11px;
+  letter-spacing: 1px;
+}
+
+.seller-table td {
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
+.stock-badge {
+  padding: 3px 8px;
+  font-size: 10px;
+  font-weight: 600;
+  border-radius: 2px;
+}
+
+.stock-badge.in-stock {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+}
+
+.stock-badge.low-stock {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.table-responsive {
+  overflow-x: auto;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+}
+
+@media (max-width: 900px) {
+  .grid-4, .grid-3, .grid-2 {
+    grid-template-columns: 1fr;
+  }
+}

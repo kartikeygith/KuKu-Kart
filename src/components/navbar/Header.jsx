@@ -22,7 +22,8 @@ import {
   HelpCircle,
   PhoneCall,
   Sun,
-  Moon
+  Moon,
+  Store
 } from 'lucide-react';
 import { useShop } from '../../context/ShopContext';
 import { useAuth } from '../../context/AuthContext';
@@ -56,7 +57,7 @@ const Header = () => {
     toggleTheme
   } = useShop();
 
-  const { user, isAuthenticated, isAdmin, isDeliveryPartner, logout, switchRole } = useAuth();
+  const { user, isAuthenticated, isAdmin, isSeller, isDeliveryPartner, logout } = useAuth();
 
   const [scrolled, setScrolled] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -303,91 +304,108 @@ const Header = () => {
               <button 
                 className="header-action-item user-action-btn"
                 onClick={() => setShowUserDropdown(!showUserDropdown)}
-                title="Client Profile"
+                title={isAuthenticated ? 'Account Suite' : 'Sign In'}
               >
                 <div className="action-icon-wrap">
                   <User size={20} />
                 </div>
                 <span className="action-label flex items-center gap-1">
-                  {user?.full_name ? user.full_name.split(' ')[0] : 'Profile'}
+                  {isAuthenticated && user?.full_name ? user.full_name.split(' ')[0] : (isAuthenticated ? 'Account' : 'Sign In')}
                   <ChevronDown size={11} className="hidden-mobile" />
                 </span>
               </button>
 
               {showUserDropdown && (
                 <div className="header-dropdown user-dropdown p-4 flex-col gap-2">
-                  <div className="pb-2 border-b border-border">
-                    <strong className="text-white text-xs block truncate">{user?.full_name || 'Valued Client'}</strong>
-                    <span className="text-10 text-muted block truncate">{user?.email || 'client@kukukart.in'}</span>
-                    <span className="role-tag mt-2">{user?.role?.toUpperCase() || 'CUSTOMER'}</span>
-                  </div>
+                  {isAuthenticated ? (
+                    <>
+                      <div className="pb-2 border-b border-border">
+                        <strong className="text-white text-xs block truncate">{user?.full_name || 'Valued Client'}</strong>
+                        <span className="text-10 text-muted block truncate">{user?.email}</span>
+                        <span className="role-tag mt-2">{user?.role?.toUpperCase() || 'CUSTOMER'}</span>
+                      </div>
 
-                  <Link to="/profile" className="dropdown-link" onClick={() => setShowUserDropdown(false)}>
-                    <User size={14} /> My Profile & Saved Addresses
-                  </Link>
+                      <Link to="/profile" className="dropdown-link" onClick={() => setShowUserDropdown(false)}>
+                        <User size={14} /> My Profile & Addresses
+                      </Link>
 
-                  <Link to="/orders" className="dropdown-link" onClick={() => setShowUserDropdown(false)}>
-                    <Package size={14} /> My Orders & Live Tracking
-                  </Link>
+                      <Link to="/orders" className="dropdown-link" onClick={() => setShowUserDropdown(false)}>
+                        <Package size={14} /> My Orders & Live Tracking
+                      </Link>
 
-                  <Link to="/wishlist" className="dropdown-link" onClick={() => setShowUserDropdown(false)}>
-                    <Heart size={14} /> Wishlist ({wishlistCount})
-                  </Link>
+                      <Link to="/wishlist" className="dropdown-link" onClick={() => setShowUserDropdown(false)}>
+                        <Heart size={14} /> Wishlist ({wishlistCount})
+                      </Link>
 
-                  <Link to="/contact" className="dropdown-link" onClick={() => setShowUserDropdown(false)}>
-                    <HelpCircle size={14} /> Concierge Help & Support
-                  </Link>
+                      {(isSeller || isAdmin) && (
+                        <Link to="/seller" className="dropdown-link text-accent" onClick={() => setShowUserDropdown(false)}>
+                          <Store size={14} /> Seller Dashboard
+                        </Link>
+                      )}
 
-                  <button 
-                    type="button"
-                    className="dropdown-link w-full text-left" 
-                    onClick={() => { setShowSettingsModal(true); setShowUserDropdown(false); }}
-                  >
-                    <Settings size={14} /> Store & Pickup Settings
-                  </button>
+                      {isAdmin && (
+                        <Link to="/admin" className="dropdown-link text-accent" onClick={() => setShowUserDropdown(false)}>
+                          <LayoutDashboard size={14} /> Admin Executive Portal
+                        </Link>
+                      )}
 
-                  {isAdmin && (
-                    <Link to="/admin" className="dropdown-link text-accent" onClick={() => setShowUserDropdown(false)}>
-                      <LayoutDashboard size={14} /> Admin Executive Portal
-                    </Link>
+                      {isDeliveryPartner && (
+                        <Link to="/delivery" className="dropdown-link text-success" onClick={() => setShowUserDropdown(false)}>
+                          <Truck size={14} /> Delivery Partner Console
+                        </Link>
+                      )}
+
+                      <Link to="/contact" className="dropdown-link" onClick={() => setShowUserDropdown(false)}>
+                        <HelpCircle size={14} /> Concierge Help & Support
+                      </Link>
+
+                      <button 
+                        type="button"
+                        className="dropdown-link w-full text-left" 
+                        onClick={() => { setShowSettingsModal(true); setShowUserDropdown(false); }}
+                      >
+                        <Settings size={14} /> Store & Pickup Settings
+                      </button>
+
+                      <button 
+                        onClick={() => { logout(); setShowUserDropdown(false); }} 
+                        className="dropdown-link text-error pt-2 border-t border-border mt-1 w-full text-left"
+                      >
+                        <LogOut size={14} /> Sign Out
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <div className="pb-2 border-b border-border">
+                        <strong className="text-white text-xs block">Welcome to KuKu Kart</strong>
+                        <span className="text-10 text-muted block">Access bespoke orders & privileges</span>
+                      </div>
+
+                      <Link to="/login" className="btn-primary text-center text-xs py-2 block font-bold" onClick={() => setShowUserDropdown(false)}>
+                        Sign In / Register
+                      </Link>
+
+                      <Link to="/orders" className="dropdown-link" onClick={() => setShowUserDropdown(false)}>
+                        <Package size={14} /> Track Order (AWB)
+                      </Link>
+
+                      <Link to="/wishlist" className="dropdown-link" onClick={() => setShowUserDropdown(false)}>
+                        <Heart size={14} /> My Wishlist ({wishlistCount})
+                      </Link>
+
+                      <Link to="/contact" className="dropdown-link" onClick={() => setShowUserDropdown(false)}>
+                        <HelpCircle size={14} /> Concierge Help & Support
+                      </Link>
+
+                      <button 
+                        type="button"
+                        className="dropdown-link w-full text-left" 
+                        onClick={() => { setShowSettingsModal(true); setShowUserDropdown(false); }}
+                      >
+                        <Settings size={14} /> Store Preferences
+                      </button>
+                    </>
                   )}
-
-                  {isDeliveryPartner && (
-                    <Link to="/delivery" className="dropdown-link text-success" onClick={() => setShowUserDropdown(false)}>
-                      <Truck size={14} /> Delivery Partner Console
-                    </Link>
-                  )}
-
-                  <div className="pt-2 border-t border-border mt-1">
-                    <span className="text-10 text-muted uppercase block mb-1">Demo Role Switch:</span>
-                    <div className="flex gap-1">
-                      <button 
-                        className={`role-btn ${user?.role === 'customer' ? 'active' : ''}`}
-                        onClick={() => { switchRole('customer'); setShowUserDropdown(false); }}
-                      >
-                        Client
-                      </button>
-                      <button 
-                        className={`role-btn ${user?.role === 'admin' ? 'active' : ''}`}
-                        onClick={() => { switchRole('admin'); setShowUserDropdown(false); navigate('/admin'); }}
-                      >
-                        Admin
-                      </button>
-                      <button 
-                        className={`role-btn ${user?.role === 'delivery_partner' ? 'active' : ''}`}
-                        onClick={() => { switchRole('delivery_partner'); setShowUserDropdown(false); navigate('/delivery'); }}
-                      >
-                        Courier
-                      </button>
-                    </div>
-                  </div>
-
-                  <button 
-                    onClick={() => { logout(); setShowUserDropdown(false); }} 
-                    className="dropdown-link text-error pt-2 border-t border-border mt-1 w-full text-left"
-                  >
-                    <LogOut size={14} /> Sign Out
-                  </button>
                 </div>
               )}
             </div>
@@ -487,30 +505,6 @@ const Header = () => {
                 <span className="active-indicator"></span>
               </Link>
 
-              {isAdmin && (
-                <Link 
-                  to="/admin" 
-                  className={`category-nav-item admin-portal-tab ${location.pathname.startsWith('/admin') ? 'active' : ''}`}
-                >
-                  <span className="category-nav-label flex items-center gap-1">
-                    <ShieldCheck size={12} /> ADMIN PANEL
-                  </span>
-                  <span className="active-indicator"></span>
-                </Link>
-              )}
-
-              {isDeliveryPartner && (
-                <Link 
-                  to="/delivery" 
-                  className={`category-nav-item delivery-portal-tab ${location.pathname.startsWith('/delivery') ? 'active' : ''}`}
-                >
-                  <span className="category-nav-label flex items-center gap-1">
-                    <Truck size={12} /> COURIER PORTAL
-                  </span>
-                  <span className="active-indicator"></span>
-                </Link>
-              )}
-
             </nav>
           </div>
         </div>
@@ -562,11 +556,19 @@ const Header = () => {
               <div className="mobile-nav-list flex-col gap-1 pt-4 border-t border-border">
                 <span className="text-10 text-muted uppercase tracking-widest block mb-2">QUICK LINKS</span>
                 <Link to="/orders" className="mobile-nav-item">Track My Orders</Link>
-                <Link to="/profile" className="mobile-nav-item">Profile & Addresses</Link>
+                {isAuthenticated ? (
+                  <>
+                    <Link to="/profile" className="mobile-nav-item">Profile & Addresses</Link>
+                    {(isSeller || isAdmin) && <Link to="/seller" className="mobile-nav-item text-accent">Seller Dashboard</Link>}
+                    {isAdmin && <Link to="/admin" className="mobile-nav-item text-accent font-bold">Admin Console</Link>}
+                    {isDeliveryPartner && <Link to="/delivery" className="mobile-nav-item text-success">Delivery Partner</Link>}
+                  </>
+                ) : (
+                  <Link to="/login" className="mobile-nav-item text-accent font-bold">Sign In / Register</Link>
+                )}
                 <Link to="/wishlist" className="mobile-nav-item">Wishlist ({wishlistCount})</Link>
                 <Link to="/cart" className="mobile-nav-item">Shopping Bag ({cartCount})</Link>
                 <Link to="/contact" className="mobile-nav-item">Customer Support</Link>
-                {isAdmin && <Link to="/admin" className="mobile-nav-item text-accent font-bold">Admin Console</Link>}
               </div>
 
             </div>
